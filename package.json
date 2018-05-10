@@ -1,0 +1,63 @@
+{
+  "_from": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0",
+  "_id": "cordova-plugin-couchbase-lite-2.0@0.2.0",
+  "_inBundle": false,
+  "_integrity": "sha1-ifXyrYBTKMxYebz1pJnEgSxLXVY=",
+  "_location": "/cordova-plugin-couchbase-lite",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "https://github.com/makbari/cordova-plugin-couchbase-lite",
+    "rawSpec": "https://github.com/makbari/cordova-plugin-couchbase-lite",
+    "saveSpec": "git+https://github.com/makbari/cordova-plugin-couchbase-lite.git",
+    "fetchSpec": "https://github.com/makbari/cordova-plugin-couchbase-lite.git",
+    "gitCommittish": "master"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "git+https://github.com/makbari/cordova-plugin-couchbase-lite.git#86d036595b5be0a153f99d89535ffaee7d67e5bd",
+  "_spec": "https://github.com/makbari/cordova-plugin-couchbase-lite",
+  "author": {
+    "name": "makbari, and Riccardo Barbi"
+  },
+  "bugs": {
+    "url": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0/issues"
+  },
+  "bundleDependencies": false,
+  "cordova": {
+    "id": "Cordova Couchbase Lite + APIs",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "dependencies": {
+    "appium": "^1.4.14"
+  },
+  "deprecated": false,
+  "description": "Cordova Couchbase Lite Plugin + APIs",
+  "homepage": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0#readme",
+  "keywords": [
+    "cordova",
+    "couchbase-lite",
+    "wkwebview",
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios",
+    "lite",
+    "Typscript",
+    "ScalaJS",
+    "REST",
+    "API",
+    "Javascript"
+  ],
+  "license": "MIT",
+  "name": "cordova-plugin-couchbase-lite-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0"
+  },
+  "version": "0.2.0"
+}

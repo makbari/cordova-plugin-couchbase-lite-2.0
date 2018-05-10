@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android"
+        id="cordova-plugin-couchbase-lite" version="1.0.0">
+  <name>Cordova Couchbase Lite + APIs</name>
+  <description>Provides Typescript and ScalaJS APIs over the provided REST API.</description>
+  <license>Apache 2.0</license>
+  <js-module src="www/cblite.js" name="CouchbaseLite">
+    <clobbers target="cbl"/>
+  </js-module>
+  <engines>
+    <engine name="cordova" version=">=6.0.0"/>
+  </engines>
+  <platform name="ios">
+    <config-file target="config.xml" parent="/widget">
+      <feature name="CBLite">
+        <param name="ios-package" value="CBLite"/>
+        <param name="onload" value="true"/>
+      </feature>
+    </config-file>
+    <header-file src="src/ios/CBLite.h"/>
+    <source-file src="src/ios/CBLite.m"/>
+
+    <framework src="libicucore.dylib"/>
+
+
+    <framework src="SystemConfiguration.framework"/>
+    <framework src="JavaScriptCore.framework"/>
+
+
+    <source-file framework="true" src="lib/ios/CouchbaseLite.framework"/>
+
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLArray.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLArrayFragment.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLAuthenticator.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLBasicAuthenticator.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLBlob.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDatabase.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDatabaseChange.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDatabaseConfiguration.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDatabaseEndpoint.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDictionary.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDictionaryFragment.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDocument.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDocumentChange.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDocumentFragment.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLEndpoint.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLErrors.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLFragment.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLFullTextIndex.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLIndex.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLIndexBuilder.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLListenerToken.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLMutableArray.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLMutableArrayFragment.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLMutableDictionary.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLMutableDictionaryFragment.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLMutableDocument.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLMutableFragment.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQuery.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryArrayExpression.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryArrayFunction.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryBuilder.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryChange.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryCollation.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryDataSource.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryExpression.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryFullTextExpression.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryFullTextFunction.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryFunction.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryJoin.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryLimit.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryMeta.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryOrdering.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryParameters.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryResult.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryResultSet.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryRow.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQuerySelectResult.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryVariableExpression.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLReplicator.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLReplicatorChange.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLReplicatorConfiguration.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLSessionAuthenticator.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLURLEndpoint.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLValueIndex.h"/>
+    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CouchbaseLite.h"/>
+
+
+  </platform>
+  <platform name="android">
+    <config-file target="res/xml/config.xml" parent="/*">
+      <feature name="CBLite">
+        <param name="android-package" value="com.couchbase.cblite.phonegap.CBLite"/>
+        <param name="onload" value="true"/>
+      </feature>
+    </config-file>
+    <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
+    <source-file src="src/android/CBLite.java" target-dir="src/com/couchbase/cblite/phonegap"/>
+    <source-file src="lib/android/commons-io-2.0.1.jar" target-dir="libs"/>
+    <resource-file src="lib/android/couchbase-lite-android-1.4.1.aar" target="libs/couchbase-lite-android-1.4.1.aar"/>
+    <resource-file src="lib/android/couchbase-lite-android-sqlite-custom-1.4.1.aar" target="libs/couchbase-lite-android-sqlite-custom-1.4.1.aar"/>
+    <source-file src="lib/android/couchbase-lite-java-core-1.4.1.jar" target-dir="libs"/>
+    <source-file src="lib/android/couchbase-lite-java-javascript-1.4.1.jar" target-dir="libs"/>
+    <source-file src="lib/android/couchbase-lite-java-listener-1.4.1.jar" target-dir="libs"/>
+    <source-file src="lib/android/rhino-1.7R3.jar" target-dir="libs"/>
+    <source-file src="lib/android/servlet-2-3.jar" target-dir="libs"/>
+    <source-file src="lib/android/stateless4j-2.4.0.jar" target-dir="libs"/>
+	<framework src="com.squareup.okhttp3:okhttp:3.3.1"/>
+	<framework src="com.squareup.okio:okio:1.8.0"/>
+    <framework src="com.fasterxml.jackson.core:jackson-annotations:2.5.3"/>
+    <framework src="com.fasterxml.jackson.core:jackson-core:2.5.3"/>
+    <framework src="com.fasterxml.jackson.core:jackson-databind:2.5.3"/>
+    <framework src="com.fasterxml.jackson.module:jackson-module-afterburner:2.5.3"/>
+    <framework src="org.apache.commons:commons-collections4:4.1"/>
+	<resource-file src="lib/android/couchbase-lite-android-forestdb-1.4.1.aar" target="libs/couchbase-lite-android-forestdb-1.4.1.aar"/>
+  </platform>
+</plugin>

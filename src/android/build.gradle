@@ -1,0 +1,19 @@
+repositories {
+    jcenter()
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    compile(name: 'com.couchbase.lite:couchbase-lite-android:2.0.0', ext: 'aar')
+    compile group: 'org.apache.commons', name: 'commons-collections4', version: '4.1'
+}
+
+android {
+    packagingOptions {
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+    }
+}
