@@ -9,6 +9,8 @@ Integrating with [ionic 3](https://ionicframework.com/), now you can use [WKWebV
 
 It is not fully implementations of couchbase-lite funcionalities. There are more to come. (needles to say, use it at your own risk ;) )
 
+Contributor: [Ricky](https://github.com/rickymediaengine) 
+
 ## Installation
 First add the plugin to your project by
 
