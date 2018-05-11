@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android"
         id="cordova-plugin-couchbase-lite" version="1.0.0">
-  <name>Cordova Couchbase Lite + APIs</name>
+  <name>Cordova Couchbase Lite 2.0</name>
   <description>Provides Typescript and ScalaJS APIs over the provided REST API.</description>
   <license>Apache 2.0</license>
   <js-module src="www/cblite.js" name="CouchbaseLite">
@@ -28,6 +28,7 @@
 
 
     <source-file framework="true" src="lib/ios/CouchbaseLite.framework"/>
+	<framework src="CouchbaseLite.framework"/>
 
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLArray.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLArrayFragment.h"/>
