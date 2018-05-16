@@ -14,7 +14,7 @@ Contributor: [Ricky](https://github.com/rickymediaengine), [Flo](https://github.
 ## Installation
 First add the plugin to your project by
 
-    cordova add plugin https://github.com/makbari/cordova-plugin-couchbase-lite.git
+    ionic cordova plugin add https://github.com/makbari/cordova-plugin-couchbase-lite.git
 
 
 ## Example
