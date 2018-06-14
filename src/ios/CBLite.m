@@ -312,6 +312,20 @@ static NSThread *cblThread;
         }
     });
 }
+
+
+
+
+-(CBLQueryExpression *) getQueryFromString: (NSString *)method and: (NSString *)field and: (NSString *)where {
+    if([method isEqualToString:@"equalTo"]){
+        return [[CBLQueryExpression property:field] equalTo:[CBLQueryExpression string:where]];
+    } else if ([method isEqualToString:@"contains"]) {
+        return [CBLQueryArrayFunction contains:[CBLQueryExpression property:field]
+                                         value:[CBLQueryExpression string:where]];
+    }
+
+}
+
 // creating query
 - (void)query:(CDVInvokedUrlCommand *) urlCommand {
 
@@ -325,9 +339,55 @@ static NSThread *cblThread;
         if ([isLocal isEqualToString:@"true"]) {
 
         } else {
+            CBLQueryExpression *type;
+            NSData* jsonData = [searchQuery dataUsingEncoding:NSUTF8StringEncoding];
+            NSError *jsonError;
+            NSArray *jsonDataArray = [[NSArray alloc]init];
+            jsonDataArray = [NSJSONSerialization JSONObjectWithData:[searchQuery dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:&jsonError];
+
+            NSLog(@"jsonDataArray: %@",jsonDataArray);
+                NSDictionary *jsonObject = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:&jsonError];
+
+                if(jsonObject !=nil){
+                    if([[jsonObject objectForKey:@"group"] isEqual:@"AND"]){
+
+                        NSMutableArray *array=[jsonObject objectForKey:@"search"];
+
+                        if(array.count>0){
+                            type =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
+                        }
+                        if(array.count>1){
+                            for(int z = 1; z<array.count;z++){
+
+                                type=[type andExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
+                            }
+
+                        }
+
+                    }
+                    if([[jsonObject objectForKey:@"group"] isEqual:@"OR"]){
+
+                        NSMutableArray *array=[jsonObject objectForKey:@"search"];
+
+                        if(array.count>0){
+                            type =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
+                        }
+                        if(array.count>1){
+                            for(int z = 1; z<array.count;z++){
+
+                                type=[type orExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
+                            }
+
+                        }
+
+                    }
+
+                }
+
+
 
             NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
-            CBLQueryExpression *type = [[CBLQueryExpression property:field] equalTo:[CBLQueryExpression string:searchQuery]];
+            //CBLQueryExpression *type = [[CBLQueryExpression property:field] equalTo:[CBLQueryExpression string:searchQuery]];
             CBLQuery *query = [CBLQueryBuilder select:@[[CBLQuerySelectResult all]]
                                                  from:[CBLQueryDataSource database:dbs[dbName]]
                                                 where:type];
