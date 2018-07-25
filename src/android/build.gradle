@@ -6,7 +6,7 @@ repositories {
 }
 
 dependencies {
-    compile(name: 'com.couchbase.lite:couchbase-lite-android:2.0.0', ext: 'aar')
+    compile 'com.couchbase.lite:couchbase-lite-android:2.0.0'
     compile group: 'org.apache.commons', name: 'commons-collections4', version: '4.1'
 }
 

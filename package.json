@@ -1,24 +1,25 @@
 {
-  "_from": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0",
+  "_from": "git+https://github.com/makbari/cordova-plugin-couchbase-lite-2.0.git",
   "_id": "cordova-plugin-couchbase-lite-2.0@0.2.0",
   "_inBundle": false,
-  "_integrity": "sha1-ifXyrYBTKMxYebz1pJnEgSxLXVY=",
-  "_location": "/cordova-plugin-couchbase-lite",
+  "_integrity": "sha1-DOXDFg7cUnGPf38akcG9zfSDK7w=",
+  "_location": "/cordova-plugin-couchbase-lite-2.0",
   "_phantomChildren": {},
   "_requested": {
     "type": "git",
-    "raw": "https://github.com/makbari/cordova-plugin-couchbase-lite",
-    "rawSpec": "https://github.com/makbari/cordova-plugin-couchbase-lite",
-    "saveSpec": "git+https://github.com/makbari/cordova-plugin-couchbase-lite.git",
-    "fetchSpec": "https://github.com/makbari/cordova-plugin-couchbase-lite.git",
+    "raw": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0",
+    "rawSpec": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0",
+    "saveSpec": "git+https://github.com/makbari/cordova-plugin-couchbase-lite-2.0.git",
+    "fetchSpec": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0.git",
     "gitCommittish": "master"
   },
   "_requiredBy": [
     "#USER",
     "/"
   ],
-  "_resolved": "git+https://github.com/makbari/cordova-plugin-couchbase-lite.git#86d036595b5be0a153f99d89535ffaee7d67e5bd",
-  "_spec": "https://github.com/makbari/cordova-plugin-couchbase-lite",
+  "_resolved": "git+https://github.com/makbari/cordova-plugin-couchbase-lite-2.0.git#0ab129b63d87eccb676e0eb620fa662f9905cb96",
+  "_spec": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0",
+  "_where": "/Users/mohammad/Documents/mapei-app",
   "author": {
     "name": "makbari, and Riccardo Barbi"
   },
@@ -57,7 +58,7 @@
   "name": "cordova-plugin-couchbase-lite-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/makbari/cordova-plugin-couchbase-lite-2.0"
+    "url": "git+https://github.com/makbari/cordova-plugin-couchbase-lite-2.0.git"
   },
   "version": "0.2.0"
 }
