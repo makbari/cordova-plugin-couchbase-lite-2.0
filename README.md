@@ -14,9 +14,12 @@ Contributor: [Ricky](https://github.com/rickymediaengine), [Flo](https://github.
 ## Installation
 First add the plugin to your project by
 
-    cordova add plugin https://github.com/makbari/cordova-plugin-couchbase-lite.git
+    cordova add plugin https://github.com/makbari/cordova-plugin-couchbase-lite-2.0.git
 
+Add RxJs inside Index.html Version 5.5.2(download the file and add it inside your asset folder). 
 
+<script src="assets/rx.js"></script>
+    
 ## Example
 
 I try to compose a simple todo application with [ionic 3](https://ionicframework.com/), and place it in this repo. 
