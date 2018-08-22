@@ -68,7 +68,7 @@ module.exports.resetCallbacks = function compact() {
  */
 module.exports.info = function info(options) {
     return new Promise(function (resolve, reject) {
-        exec(function (res) {resolve(res);}, function (err) {reject(err);}, "CBLite", "info", options);
+        exec(function (res) {resolve(JSON.parse(res));}, function (err) {reject(err);}, "CBLite", "info", options);
     });
 };
 
