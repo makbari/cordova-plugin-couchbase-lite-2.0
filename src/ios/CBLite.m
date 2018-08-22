@@ -154,12 +154,31 @@ static NSThread *cblThread;
 - (void)initDb:(CDVInvokedUrlCommand *)urlCommand {
     dispatch_cbl_async(cblThread, ^{
         NSString* dbName = [urlCommand.arguments objectAtIndex:0];
+        NSArray* index =[[NSArray alloc] init];
+        if([urlCommand.arguments count]>1){
+        index =[urlCommand.arguments objectAtIndex:1];
+        }
         NSError *error;
         if(dbs == nil){dbs = [NSMutableDictionary dictionary];}
 
 
-        dbs[dbName] = [[CBLDatabase alloc] initWithName:dbName error:&error];
-
+        
+        CBLDatabase* db=[[CBLDatabase alloc] initWithName:dbName error:&error];
+        dbs[dbName] =db;
+        if([index count]>0){
+            for (NSDictionary* ind in index) {
+                NSMutableArray* arrField=[[NSMutableArray alloc]init];
+                for(NSString* field in [ind valueForKey:@"fileds"]){
+                    [arrField addObject: [CBLValueIndexItem property:field]];
+                }
+                CBLIndex* index = [CBLIndexBuilder valueIndexWithItems:arrField];
+                [db createIndex:index withName:[ind valueForKey:@"name"] error:&error];
+            }
+            
+            
+        }
+        
+        
         CDVPluginResult* pluginResult;
         if (!dbs[dbName]) pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Could not init DB"];
         else pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db init success"];
@@ -361,7 +380,11 @@ static NSThread *cblThread;
 -(CBLQueryExpression *) getQueryFromString: (NSString *)method and: (NSString *)field and: (NSString *)where {
     if([method isEqualToString:@"equalTo"]){
         return [[CBLQueryExpression property:field] equalTo:[CBLQueryExpression string:where]];
-    } else if ([method isEqualToString:@"contains"]) {
+    }
+    else if ([method isEqualToString:@"notEqualTo"]) {
+        return [[CBLQueryExpression property:field] notEqualTo:[CBLQueryExpression string:where]];
+    }
+    else if ([method isEqualToString:@"contains"]) {
         return [CBLQueryArrayFunction contains:[CBLQueryExpression property:field]
                                          value:[CBLQueryExpression string:where]];
     }
