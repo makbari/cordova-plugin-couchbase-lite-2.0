@@ -190,16 +190,45 @@ static NSThread *cblThread;
     });
 }
 
+- (void)deleteDatabase:(CDVInvokedUrlCommand*)urlCommand {
+    dispatch_cbl_async(cblThread, ^{
+        NSString* dbName = [urlCommand.arguments objectAtIndex:0];
+        NSError *error;
+        CDVPluginResult* pluginResult;
+        if (!dbs[dbName]){
+            
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"DB not started"];
+        }else{
+            CBLDatabase* db=dbs[dbName];
+            [db delete:&error];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
+            
+        }
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+    });
+}
+
+
+
 - (void)sync:(CDVInvokedUrlCommand *)urlCommand {
     dispatch_cbl_async(cblThread, ^{
         NSString* dbName = [urlCommand.arguments objectAtIndex:0];
         NSString* syncURL = [urlCommand.arguments objectAtIndex:1];
         NSString* user = [urlCommand.arguments objectAtIndex:2];
         NSString* pass = [urlCommand.arguments objectAtIndex:3];
+        NSString* replicationType=@"PushPull";
+        if([urlCommand.arguments count]>4){
+            replicationType=[urlCommand.arguments objectAtIndex:4];
+        }
+        NSArray* channlesArray=NULL;
+        if([urlCommand.arguments count]>5){
+            channlesArray=[urlCommand.arguments objectAtIndex:5];
+        }
+        
 
         if(replications == nil){replications = [NSMutableDictionary dictionary];}
 
-        if(replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pushPull"]] != nil){ [replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pushPull"]] stop]; }
+        if(replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] != nil){ [replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] stop]; }
         //        if(replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pull"]] != nil){ [replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pull"]] stop]; }
         //
         //        CBLReplication *push = [dbs[dbName] createPushReplication: [NSURL URLWithString: syncURL]];
@@ -217,11 +246,24 @@ static NSThread *cblThread;
         CBLURLEndpoint *target = [[CBLURLEndpoint alloc] initWithURL: url];
         CBLReplicatorConfiguration *config = [[CBLReplicatorConfiguration alloc] initWithDatabase:dbs[dbName]
                                                                                            target:target];
-        config.replicatorType = kCBLReplicatorTypePushAndPull;
+        
+        if([replicationType isEqualToString:@"PushPull"]){
+            config.replicatorType = kCBLReplicatorTypePushAndPull;
+        }else if([replicationType isEqualToString:@"Push"]){
+            config.replicatorType = kCBLReplicatorTypePush;
+        }else if([replicationType isEqualToString:@"Pull"]){
+            config.replicatorType = kCBLReplicatorTypePull;
+        }
+        if(channlesArray!=NULL){
+            config.channels=channlesArray;
+        }
+        
         config.continuous = true;
+        
+        config.authenticator = [[CBLBasicAuthenticator alloc] initWithUsername:user password:pass];
         CBLReplicator *replicator = [[CBLReplicator alloc] initWithConfig:config];
         [replicator start];
-        replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pushPull"]] = replicator;
+        replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] = replicator;
         //        replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pull"]] = pull;
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"native sync started"];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
@@ -332,14 +374,28 @@ static NSThread *cblThread;
     dispatch_cbl_async(cblThread, ^{
         NSString* dbName = [urlCommand.arguments objectAtIndex:0];
 
-        NSString *field = [urlCommand.arguments objectAtIndex:1];
+        NSArray *field = [urlCommand.arguments objectAtIndex:1];
         NSString *searchQuery = [urlCommand.arguments objectAtIndex:2];
         NSString *isLocal = [urlCommand.arguments objectAtIndex:3];
         NSError *error;
         if ([isLocal isEqualToString:@"true"]) {
 
         } else {
-            CBLQueryExpression *type;
+            CBLQueryExpression *whereExpression;
+            NSArray* selectExpression= @[[CBLQuerySelectResult all]];
+            if([field count]>0){
+                NSMutableArray* marr=[[NSMutableArray alloc]init];
+                [marr addObject:[CBLQuerySelectResult expression:[CBLQueryMeta id]]];
+                for (NSString* s in field) {
+                    [marr addObject:[CBLQuerySelectResult property:s]];
+                }
+                selectExpression=[marr copy];
+                
+            }
+            
+            
+            
+            // Generate Where Expression
             NSData* jsonData = [searchQuery dataUsingEncoding:NSUTF8StringEncoding];
             NSError *jsonError;
             NSArray *jsonDataArray = [[NSArray alloc]init];
@@ -354,12 +410,12 @@ static NSThread *cblThread;
                         NSMutableArray *array=[jsonObject objectForKey:@"search"];
 
                         if(array.count>0){
-                            type =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
+                            whereExpression =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
                         }
                         if(array.count>1){
                             for(int z = 1; z<array.count;z++){
 
-                                type=[type andExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
+                                whereExpression=[whereExpression andExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
                             }
 
                         }
@@ -370,12 +426,12 @@ static NSThread *cblThread;
                         NSMutableArray *array=[jsonObject objectForKey:@"search"];
 
                         if(array.count>0){
-                            type =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
+                            whereExpression =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
                         }
                         if(array.count>1){
                             for(int z = 1; z<array.count;z++){
 
-                                type=[type orExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
+                                whereExpression=[whereExpression orExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
                             }
 
                         }
@@ -383,23 +439,34 @@ static NSThread *cblThread;
                     }
 
                 }
-
+            //End Generate
 
 
             NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
             //CBLQueryExpression *type = [[CBLQueryExpression property:field] equalTo:[CBLQueryExpression string:searchQuery]];
-            CBLQuery *query = [CBLQueryBuilder select:@[[CBLQuerySelectResult all]]
+            CBLQuery *query;
+            if(whereExpression!=nil){
+            query= [CBLQueryBuilder select:selectExpression
                                                  from:[CBLQueryDataSource database:dbs[dbName]]
-                                                where:type];
-            CBLQueryResultSet *result = [query execute:&error];
+                                                where:whereExpression];
+            }else{
+                query= [CBLQueryBuilder select:selectExpression
+                                          from:[CBLQueryDataSource database:dbs[dbName]]];
+            }
+            
+            NSLog(@"query: %@",[query description]);
+            NSArray *result = [[query execute:&error] allResults];
 
             for (CBLQueryRow* row in result) {
                 @try{
-                    CBLDictionary *dict = [row valueForKey:dbName];
-                    NSData *data = [NSJSONSerialization dataWithJSONObject:[dict toDictionary]
-                                                                   options:0 //or NSJSONWritingPrettyPrinted
-                                                                     error:&error];
-                    [responseBuffer addObject:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+                    if([field count]==0){
+                        CBLDictionary *dict = [row valueForKey:dbName];
+                        [responseBuffer addObject:[dict toDictionary]];
+                    }else{
+                        
+                        NSDictionary *dict = [row dictionaryWithValuesForKeys:field];
+                        [responseBuffer addObject:dict];
+                    }
                 }
                 @catch(NSException *e){
                     NSDictionary *dict = [[NSDictionary alloc] initWithObjectsAndKeys:
@@ -411,8 +478,14 @@ static NSThread *cblThread;
                     NSLog( @"ERROR %@", dict );
                 }
             }
-            CDVPluginResult* pluginResult =
-            [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[[NSString stringWithFormat:@"[%@]", [responseBuffer componentsJoinedByString:@","]] dataUsingEncoding:NSUTF8StringEncoding]];
+           
+           /* [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[[NSString stringWithFormat:@"[%@]", [responseBuffer componentsJoinedByString:@","]] dataUsingEncoding:NSUTF8StringEncoding]];*/
+            NSData *data = [NSJSONSerialization dataWithJSONObject:responseBuffer
+                                                           options:0
+                                                             error:&error];
+            NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+           CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
+            
             [pluginResult setKeepCallbackAsBool:YES];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
 

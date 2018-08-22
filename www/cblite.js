@@ -84,6 +84,17 @@ module.exports.initDb = function initDb(options) {
 
 /**
  * @param options:[dbName]
+ * @returns message:string
+ */
+module.exports.deleteDb = function deleteDb(options) {
+    return new Promise(function (resolve, reject) {
+        exec(function (res) {resolve(res);}, function (err) {reject(err);}, "CBLite", "deleteDatabase", options);
+    });
+};
+
+
+/**
+ * @param options:[dbName]
  * @returns sequenceNumber:number
  */
 module.exports.lastSequence = function lastSequence(options) {
