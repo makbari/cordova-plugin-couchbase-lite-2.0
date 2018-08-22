@@ -43,6 +43,29 @@ static NSThread *cblThread;
         });
 }
 
+
++(NSString *) getStringFromStatus:(CBLReplicatorStatus *)status withReplicatorName:(NSString *)r andDatabase:(NSString *) dbName{
+    NSString * response=@"";
+    if (status.activity == kCBLReplicatorStopped) {
+        NSLog(@"Replication stopped");
+        response = [CBLite jsonSyncStatus:@"REPLICATION_STOPPED" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
+    } else if (status.activity == kCBLReplicatorOffline) {
+        NSLog(@"Replication Offline");
+        response = [CBLite jsonSyncStatus:@"REPLICATION_OFFLINE" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
+    } else if (status.activity == kCBLReplicatorConnecting) {
+        NSLog(@"Replication Connecting");
+        response = [CBLite jsonSyncStatus:@"REPLICATION_CONNECTING" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
+    } else if (status.activity == kCBLReplicatorIdle) {
+        NSLog(@"Replication kCBLReplicatorIdle");
+        response = [CBLite jsonSyncStatus:@"REPLICATION_IDLE" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
+    } else if (status.activity == kCBLReplicatorBusy) {
+        NSLog( @"%@", [NSString stringWithFormat:@"Replication Busy Reolication %llu di %llu",status.progress.completed,status.progress.total]);
+        response = [CBLite jsonSyncStatus:@"REPLICATION_ACTIVE" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
+    }
+    return response;
+}
+
+
 - (void)changesReplication:(CDVInvokedUrlCommand *)urlCommand {
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
     [pluginResult setKeepCallbackAsBool:YES];
@@ -55,32 +78,18 @@ static NSThread *cblThread;
 
         NSString* dbName = [urlCommand.arguments objectAtIndex:0];
         for (NSString *r in replications) {
-            [replications[r] addChangeListener:^(CBLReplicatorChange *change) {
-                NSString *response;
-                if (change.status.activity == kCBLReplicatorStopped) {
-                    NSLog(@"Replication stopped");
-                    response = [CBLite jsonSyncStatus:@"REPLICATION_STOPPED" withDb:dbName withType:r progressTotal:change.status.progress.total progressCompleted:change.status.progress.completed];
-                } else if (change.status.activity == kCBLReplicatorOffline) {
-                    NSLog(@"Replication Offline");
-                    response = [CBLite jsonSyncStatus:@"REPLICATION_OFFLINE" withDb:dbName withType:r progressTotal:change.status.progress.total progressCompleted:change.status.progress.completed];
-                } else if (change.status.activity == kCBLReplicatorConnecting) {
-                    NSLog(@"Replication Connecting");
-                    response = [CBLite jsonSyncStatus:@"REPLICATION_CONNECTING" withDb:dbName withType:r progressTotal:change.status.progress.total progressCompleted:change.status.progress.completed];
-                } else if (change.status.activity == kCBLReplicatorIdle) {
-                    NSLog(@"Replication kCBLReplicatorIdle");
-                    response = [CBLite jsonSyncStatus:@"REPLICATION_IDLE" withDb:dbName withType:r progressTotal:change.status.progress.total progressCompleted:change.status.progress.completed];
-                } else if (change.status.activity == kCBLReplicatorBusy) {
-                    NSLog( @"%@", [NSString stringWithFormat:@"Replication Busy Reolication %llu di %llu",change.status.progress.completed,change.status.progress.total]);
-                    response = [CBLite jsonSyncStatus:@"REPLICATION_ACTIVE" withDb:dbName withType:r progressTotal:change.status.progress.total progressCompleted:change.status.progress.completed];
-                }
+            if([r containsString:dbName]){
+                [replications[r] addChangeListener:^(CBLReplicatorChange *change) {
+                    NSString *response= [CBLite getStringFromStatus:change.status withReplicatorName:r andDatabase:dbName];
+                    
 
-                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:response];
-                [pluginResult setKeepCallbackAsBool:YES];
-                [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:response];
+                    [pluginResult setKeepCallbackAsBool:YES];
+                    [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
 
 
-            }];
-
+                }];
+            }
         }
         //        [[NSNotificationCenter defaultCenter]
         //         addObserverForName:kCBLReplicationChangeNotification
@@ -143,12 +152,35 @@ static NSThread *cblThread;
 }
 
 - (void)info:(CDVInvokedUrlCommand *)urlCommand {
-    //    dispatch_cbl_async(cblThread, ^{
-    //        NSString* dbName = [urlCommand.arguments objectAtIndex:0];
-    //        CBLDatabase *db = dbs[dbName];
-    //        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsNSUInteger:db.documentCount];
-    //        [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-    //    });
+        dispatch_cbl_async(cblThread, ^{
+            NSString* dbName = [urlCommand.arguments objectAtIndex:0];
+            NSMutableDictionary* dict=[[NSMutableDictionary alloc] init];
+            
+            if(!dbs[dbName]){
+                 [dict setObject:@"NOTSTARTED" forKey:@"status"];
+               
+            }else{
+            
+            CBLDatabase *db = dbs[dbName];
+            [dict setObject:@"STARTED" forKey:@"status"];
+           
+            [dict setObject:[db indexes] forKey:@"dbIndex"];
+                for (NSString *r in replications) {
+                    if([r containsString:dbName]){
+                        CBLReplicator* repl= replications[r];
+                        NSString *response= [CBLite getStringFromStatus:repl.status withReplicatorName:r andDatabase:dbName];
+                        [dict setObject:response forKey:@"replication"];
+                    }
+                }
+            }
+            NSError* error;
+            NSData *data = [NSJSONSerialization dataWithJSONObject:dict
+                                                           options:0
+                                                             error:&error];
+            NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:response];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+        });
 }
 
 - (void)initDb:(CDVInvokedUrlCommand *)urlCommand {
@@ -279,7 +311,7 @@ static NSThread *cblThread;
         
         config.continuous = true;
         
-        config.authenticator = [[CBLBasicAuthenticator alloc] initWithUsername:user password:pass];
+        //config.authenticator = [[CBLBasicAuthenticator alloc] initWithUsername:user password:pass];
         CBLReplicator *replicator = [[CBLReplicator alloc] initWithConfig:config];
         [replicator start];
         replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] = replicator;
