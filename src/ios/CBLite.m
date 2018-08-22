@@ -27,7 +27,7 @@ static NSThread *cblThread;
             NSString* dbName = [urlCommand.arguments objectAtIndex:0];
              CBLDatabase *db = dbs[dbName];
             [db addChangeListener:^(CBLDatabaseChange *change ) {
-                 NSLog(@"Replication changessssssssss %@", change);
+                
 
 
 
@@ -168,7 +168,11 @@ static NSThread *cblThread;
                 for (NSString *r in replications) {
                     if([r containsString:dbName]){
                         CBLReplicator* repl= replications[r];
-                        NSString *response= [CBLite getStringFromStatus:repl.status withReplicatorName:r andDatabase:dbName];
+                        NSError* error;
+                        NSString *response= [NSJSONSerialization
+                                             JSONObjectWithData: [[CBLite getStringFromStatus:repl.status withReplicatorName:r andDatabase:dbName] dataUsingEncoding:NSUTF8StringEncoding]
+                                             options:0
+                                             error:&error];
                         [dict setObject:response forKey:@"replication"];
                     }
                 }
@@ -419,6 +423,8 @@ static NSThread *cblThread;
     else if ([method isEqualToString:@"contains"]) {
         return [CBLQueryArrayFunction contains:[CBLQueryExpression property:field]
                                          value:[CBLQueryExpression string:where]];
+    }else{
+        return nil;
     }
 
 }
@@ -432,6 +438,14 @@ static NSThread *cblThread;
         NSArray *field = [urlCommand.arguments objectAtIndex:1];
         NSString *searchQuery = [urlCommand.arguments objectAtIndex:2];
         NSString *isLocal = [urlCommand.arguments objectAtIndex:3];
+        NSArray *groupbyField;
+        if([urlCommand.arguments count]>5){
+            NSMutableArray* mutArr=[[NSMutableArray alloc] init];
+            for(NSString* Gfi in [urlCommand.arguments objectAtIndex:5]){
+                [mutArr addObject:[CBLQueryExpression property:Gfi]];
+            }
+            groupbyField=mutArr;
+        }
         NSError *error;
         if ([isLocal isEqualToString:@"true"]) {
 
@@ -440,9 +454,15 @@ static NSThread *cblThread;
             NSArray* selectExpression= @[[CBLQuerySelectResult all]];
             if([field count]>0){
                 NSMutableArray* marr=[[NSMutableArray alloc]init];
-                [marr addObject:[CBLQuerySelectResult expression:[CBLQueryMeta id]]];
+                if(groupbyField==nil){
+                    [marr addObject:[CBLQuerySelectResult expression:[CBLQueryMeta id]]];
+                }
                 for (NSString* s in field) {
-                    [marr addObject:[CBLQuerySelectResult property:s]];
+                    if([s isEqualToString:@"COUNT"]){
+                        [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction count:[CBLQueryExpression all]] as:s]];
+                    }else{
+                        [marr addObject:[CBLQuerySelectResult property:s]];
+                    }
                 }
                 selectExpression=[marr copy];
                 
@@ -498,16 +518,12 @@ static NSThread *cblThread;
 
 
             NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
-            //CBLQueryExpression *type = [[CBLQueryExpression property:field] equalTo:[CBLQueryExpression string:searchQuery]];
+
             CBLQuery *query;
-            if(whereExpression!=nil){
             query= [CBLQueryBuilder select:selectExpression
                                                  from:[CBLQueryDataSource database:dbs[dbName]]
-                                                where:whereExpression];
-            }else{
-                query= [CBLQueryBuilder select:selectExpression
-                                          from:[CBLQueryDataSource database:dbs[dbName]]];
-            }
+                                                where:whereExpression groupBy:groupbyField];
+         
             
             NSLog(@"query: %@",[query description]);
             NSArray *result = [[query execute:&error] allResults];
@@ -518,7 +534,7 @@ static NSThread *cblThread;
                         CBLDictionary *dict = [row valueForKey:dbName];
                         [responseBuffer addObject:[dict toDictionary]];
                     }else{
-                        
+                       
                         NSDictionary *dict = [row dictionaryWithValuesForKeys:field];
                         [responseBuffer addObject:dict];
                     }
