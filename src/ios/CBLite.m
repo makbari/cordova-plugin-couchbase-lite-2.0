@@ -196,28 +196,30 @@ static NSThread *cblThread;
         }
         NSError *error;
         if(dbs == nil){dbs = [NSMutableDictionary dictionary];}
-
-
-        
-        CBLDatabase* db=[[CBLDatabase alloc] initWithName:dbName error:&error];
-        dbs[dbName] =db;
-        if([index count]>0){
-            for (NSDictionary* ind in index) {
-                NSMutableArray* arrField=[[NSMutableArray alloc]init];
-                for(NSString* field in [ind valueForKey:@"fileds"]){
-                    [arrField addObject: [CBLValueIndexItem property:field]];
-                }
-                CBLIndex* index = [CBLIndexBuilder valueIndexWithItems:arrField];
-                [db createIndex:index withName:[ind valueForKey:@"name"] error:&error];
-            }
-            
-            
-        }
-        
-        
         CDVPluginResult* pluginResult;
-        if (!dbs[dbName]) pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Could not init DB"];
-        else pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db init success"];
+        if(!dbs[dbName]){
+        
+            CBLDatabase* db=[[CBLDatabase alloc] initWithName:dbName error:&error];
+            dbs[dbName] =db;
+            if([index count]>0){
+                for (NSDictionary* ind in index) {
+                    NSMutableArray* arrField=[[NSMutableArray alloc]init];
+                    for(NSString* field in [ind valueForKey:@"fileds"]){
+                        [arrField addObject: [CBLValueIndexItem property:field]];
+                    }
+                    CBLIndex* index = [CBLIndexBuilder valueIndexWithItems:arrField];
+                    [db createIndex:index withName:[ind valueForKey:@"name"] error:&error];
+                }
+                
+                
+            }
+            if (!dbs[dbName]) pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Could not init DB"];
+            else pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db init success"];
+        }else{
+           pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db init already started"];
+        }
+       
+        
         [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
     });
 }
@@ -420,6 +422,15 @@ static NSThread *cblThread;
     else if ([method isEqualToString:@"notEqualTo"]) {
         return [[CBLQueryExpression property:field] notEqualTo:[CBLQueryExpression string:where]];
     }
+    else if ([method isEqualToString:@"greaterThanOrEqualTo"]) {
+        return [[CBLQueryExpression property:field] greaterThanOrEqualTo:[CBLQueryExpression string:where]];
+    }
+    else if ([method isEqualToString:@"like"]) {
+        return [[CBLQueryExpression property:field] like:[CBLQueryExpression string:where]];
+    }
+    else if ([method isEqualToString:@"regex"]) {
+        return [[CBLQueryExpression property:field] regex:[CBLQueryExpression string:where]];
+    }
     else if ([method isEqualToString:@"contains"]) {
         return [CBLQueryArrayFunction contains:[CBLQueryExpression property:field]
                                          value:[CBLQueryExpression string:where]];
@@ -437,14 +448,33 @@ static NSThread *cblThread;
 
         NSArray *field = [urlCommand.arguments objectAtIndex:1];
         NSString *searchQuery = [urlCommand.arguments objectAtIndex:2];
-        NSString *isLocal = [urlCommand.arguments objectAtIndex:3];
+        NSString *indexing=[urlCommand.arguments objectAtIndex:3];
+        NSString *isLocal = [urlCommand.arguments objectAtIndex:4];
+        
         NSArray *groupbyField;
-        if([urlCommand.arguments count]>5){
+        if([urlCommand.arguments count]>5 && [[urlCommand.arguments objectAtIndex:5] count]>0){
             NSMutableArray* mutArr=[[NSMutableArray alloc] init];
             for(NSString* Gfi in [urlCommand.arguments objectAtIndex:5]){
                 [mutArr addObject:[CBLQueryExpression property:Gfi]];
             }
             groupbyField=mutArr;
+        }
+        NSArray *orderByField;
+        if([urlCommand.arguments count]>6 && [[urlCommand.arguments objectAtIndex:6] count]>0){
+            NSMutableArray* mutArr=[[NSMutableArray alloc] init];
+            for(NSDictionary* orderByF in [urlCommand.arguments objectAtIndex:6]){
+                //[mutArr addObject:[CBLQueryExpression property:Gfi]];
+                if([[orderByF valueForKey:@"order"] isEqualToString:@"descending"]){
+                    [mutArr addObject:[[CBLQueryOrdering property:[orderByF valueForKey:@"fields"]] descending]];
+                }else{
+                    [mutArr addObject:[[CBLQueryOrdering property:[orderByF valueForKey:@"fields"]] ascending]];
+                }
+            }
+            orderByField=mutArr;
+        }
+        CBLQueryLimit *queryLimit;
+        if([urlCommand.arguments count]>7 && ![[urlCommand.arguments objectAtIndex:7] isEqual:[NSNull null]]){
+           queryLimit= [CBLQueryLimit limit:[CBLQueryExpression integer:[[urlCommand.arguments objectAtIndex:7] intValue]]];
         }
         NSError *error;
         if ([isLocal isEqualToString:@"true"]) {
@@ -476,7 +506,7 @@ static NSThread *cblThread;
             NSArray *jsonDataArray = [[NSArray alloc]init];
             jsonDataArray = [NSJSONSerialization JSONObjectWithData:[searchQuery dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:&jsonError];
 
-            NSLog(@"jsonDataArray: %@",jsonDataArray);
+          
                 NSDictionary *jsonObject = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:&jsonError];
 
                 if(jsonObject !=nil){
@@ -522,7 +552,7 @@ static NSThread *cblThread;
             CBLQuery *query;
             query= [CBLQueryBuilder select:selectExpression
                                                  from:[CBLQueryDataSource database:dbs[dbName]]
-                                                where:whereExpression groupBy:groupbyField];
+                                                where:whereExpression groupBy:groupbyField having:nil orderBy:orderByField limit:queryLimit];
          
             
             NSLog(@"query: %@",[query description]);
