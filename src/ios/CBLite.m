@@ -59,7 +59,7 @@ static NSThread *cblThread;
         NSLog(@"Replication kCBLReplicatorIdle");
         response = [CBLite jsonSyncStatus:@"REPLICATION_IDLE" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
     } else if (status.activity == kCBLReplicatorBusy) {
-        NSLog( @"%@", [NSString stringWithFormat:@"Replication Busy Reolication %llu di %llu",status.progress.completed,status.progress.total]);
+        NSLog( @"%@", [NSString stringWithFormat:@"Replication Busy Replication %@ %llu di %llu",dbName, status.progress.completed,status.progress.total]);
         response = [CBLite jsonSyncStatus:@"REPLICATION_ACTIVE" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
     }
     return response;
@@ -176,6 +176,12 @@ static NSThread *cblThread;
                         [dict setObject:response forKey:@"replication"];
                     }
                 }
+                CBLQuery* idQuery = [CBLQueryBuilder select:@[[CBLQuerySelectResult expression:[CBLQueryMeta id]]]
+                                                       from:[CBLQueryDataSource database:dbs[dbName]]
+                                     ];
+                 CBLQueryResultSet *result = [idQuery execute:nil];
+                
+                [dict setValue:[NSNumber numberWithLong:[[result allResults] count]] forKey:@"objectCount"];
             }
             NSError* error;
             NSData *data = [NSJSONSerialization dataWithJSONObject:dict
@@ -202,13 +208,16 @@ static NSThread *cblThread;
             CBLDatabase* db=[[CBLDatabase alloc] initWithName:dbName error:&error];
             dbs[dbName] =db;
             if([index count]>0){
+                NSArray *alreadyActivatedIndex=[db indexes] ;
                 for (NSDictionary* ind in index) {
-                    NSMutableArray* arrField=[[NSMutableArray alloc]init];
-                    for(NSString* field in [ind valueForKey:@"fileds"]){
-                        [arrField addObject: [CBLValueIndexItem property:field]];
+                    if(![alreadyActivatedIndex containsObject:[ind valueForKey:@"name"]]){
+                        NSMutableArray* arrField=[[NSMutableArray alloc]init];
+                        for(NSString* field in [ind valueForKey:@"fileds"]){
+                            [arrField addObject: [CBLValueIndexItem property:field]];
+                        }
+                        CBLIndex* index = [CBLIndexBuilder valueIndexWithItems:arrField];
+                        [db createIndex:index withName:[ind valueForKey:@"name"] error:&error];
                     }
-                    CBLIndex* index = [CBLIndexBuilder valueIndexWithItems:arrField];
-                    [db createIndex:index withName:[ind valueForKey:@"name"] error:&error];
                 }
                 
                 
@@ -314,7 +323,7 @@ static NSThread *cblThread;
         if(channlesArray!=NULL){
             config.channels=channlesArray;
         }
-        
+        config.allowReplicatingInBackground=true;
         config.continuous = true;
         
         //config.authenticator = [[CBLBasicAuthenticator alloc] initWithUsername:user password:pass];
