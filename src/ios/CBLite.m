@@ -580,10 +580,11 @@ static NSThread *cblThread;
                                                  from:[CBLQueryDataSource database:dbs[dbName]]
                                                 where:whereExpression groupBy:groupbyField having:nil orderBy:orderByField limit:queryLimit];
          
+            CFTimeInterval startQuery = CFAbsoluteTimeGetCurrent();
             
-            NSLog(@"query: %@",[query description]);
             NSArray *result = [[query execute:&error] allResults];
             if(error){
+                NSLog(@"%@ query in Error : %@",dbName,[query description]);
                 NSData *data = [NSJSONSerialization dataWithJSONObject:[error userInfo]
                                                                options:0
                                                                  error:&error];
@@ -600,7 +601,8 @@ static NSThread *cblThread;
                         [responseBuffer addObject:[row toDictionary]];
                     }
                 }
-
+                CFTimeInterval endQuery = CFAbsoluteTimeGetCurrent();
+                NSLog(@"%@ Query %@ Time: %g",dbName,[query description], endQuery - startQuery);
                 NSData *data = [NSJSONSerialization dataWithJSONObject:responseBuffer
                                                                options:0
                                                                  error:&error];
