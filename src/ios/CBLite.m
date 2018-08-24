@@ -454,7 +454,7 @@ static NSThread *cblThread;
     
     if([field count]>0){
         NSMutableArray* marr=[[NSMutableArray alloc]init];
-        if(groupbyField==nil){
+        if(groupbyField==nil && ![field containsObject:@"id"]){
             [marr addObject:[CBLQuerySelectResult expression:[CBLQueryMeta id]]];
         }
         for (NSString* s in field) {
@@ -574,25 +574,34 @@ static NSThread *cblThread;
             
             NSLog(@"query: %@",[query description]);
             NSArray *result = [[query execute:&error] allResults];
-
-            for (CBLQueryResult* row in result) {
-                if([field count]==0){
-                    [responseBuffer addObject:[[row toDictionary] objectForKey:dbName]];
-                }else{
-                    [responseBuffer addObject:[row toDictionary]];
+            if(error){
+                NSData *data = [NSJSONSerialization dataWithJSONObject:[error userInfo]
+                                                               options:0
+                                                                 error:&error];
+                NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
+                
+                [pluginResult setKeepCallbackAsBool:YES];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+            }else{
+                for (CBLQueryResult* row in result) {
+                    if([field count]==0){
+                        [responseBuffer addObject:[[row toDictionary] objectForKey:dbName]];
+                    }else{
+                        [responseBuffer addObject:[row toDictionary]];
+                    }
                 }
+
+                NSData *data = [NSJSONSerialization dataWithJSONObject:responseBuffer
+                                                               options:0
+                                                                 error:&error];
+                NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+               CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
+                
+                [pluginResult setKeepCallbackAsBool:YES];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+
             }
-
-            NSData *data = [NSJSONSerialization dataWithJSONObject:responseBuffer
-                                                           options:0
-                                                             error:&error];
-            NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-           CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
-            
-            [pluginResult setKeepCallbackAsBool:YES];
-            [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-
-
         }
     });
 }
