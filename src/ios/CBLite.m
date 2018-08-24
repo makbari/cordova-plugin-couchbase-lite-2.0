@@ -425,6 +425,9 @@ static NSThread *cblThread;
     else if ([method isEqualToString:@"greaterThanOrEqualTo"]) {
         return [[CBLQueryExpression property:field] greaterThanOrEqualTo:[CBLQueryExpression string:where]];
     }
+    else if ([method isEqualToString:@"lessThanOrEqualTo"]) {
+        return [[CBLQueryExpression property:field] lessThanOrEqualTo:[CBLQueryExpression string:where]];
+    }
     else if ([method isEqualToString:@"like"]) {
         return [[CBLQueryExpression property:field] like:[CBLQueryExpression string:where]];
     }
@@ -434,11 +437,40 @@ static NSThread *cblThread;
     else if ([method isEqualToString:@"contains"]) {
         return [CBLQueryArrayFunction contains:[CBLQueryExpression property:field]
                                          value:[CBLQueryExpression string:where]];
+    }
+    else if ([method isEqualToString:@"exist"]) {
+        return [[CBLQueryExpression property:field] notNullOrMissing];
     }else{
         return nil;
     }
 
 }
+
+
+
++(NSArray *) arrayCBLFieldFromArray:(NSArray *)field andGroupByField:(NSArray *)groupbyField{
+    
+    NSArray* selectExpression=@[[CBLQuerySelectResult all]];
+    
+    if([field count]>0){
+        NSMutableArray* marr=[[NSMutableArray alloc]init];
+        if(groupbyField==nil){
+            [marr addObject:[CBLQuerySelectResult expression:[CBLQueryMeta id]]];
+        }
+        for (NSString* s in field) {
+            if([s isEqualToString:@"COUNT"]){
+                [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction count:[CBLQueryExpression all]] as:s]];
+            }else{
+            
+                [marr addObject:[CBLQuerySelectResult property:s]];
+            }
+        }
+        selectExpression=[marr copy];
+        
+    }
+    return selectExpression;
+}
+
 
 // creating query
 - (void)query:(CDVInvokedUrlCommand *) urlCommand {
@@ -481,22 +513,7 @@ static NSThread *cblThread;
 
         } else {
             CBLQueryExpression *whereExpression;
-            NSArray* selectExpression= @[[CBLQuerySelectResult all]];
-            if([field count]>0){
-                NSMutableArray* marr=[[NSMutableArray alloc]init];
-                if(groupbyField==nil){
-                    [marr addObject:[CBLQuerySelectResult expression:[CBLQueryMeta id]]];
-                }
-                for (NSString* s in field) {
-                    if([s isEqualToString:@"COUNT"]){
-                        [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction count:[CBLQueryExpression all]] as:s]];
-                    }else{
-                        [marr addObject:[CBLQuerySelectResult property:s]];
-                    }
-                }
-                selectExpression=[marr copy];
-                
-            }
+            NSArray* selectExpression=[CBLite arrayCBLFieldFromArray:field andGroupByField:groupbyField];
             
             
             
@@ -547,7 +564,7 @@ static NSThread *cblThread;
             //End Generate
 
 
-            NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
+              NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
 
             CBLQuery *query;
             query= [CBLQueryBuilder select:selectExpression
@@ -558,29 +575,14 @@ static NSThread *cblThread;
             NSLog(@"query: %@",[query description]);
             NSArray *result = [[query execute:&error] allResults];
 
-            for (CBLQueryRow* row in result) {
-                @try{
-                    if([field count]==0){
-                        CBLDictionary *dict = [row valueForKey:dbName];
-                        [responseBuffer addObject:[dict toDictionary]];
-                    }else{
-                       
-                        NSDictionary *dict = [row dictionaryWithValuesForKeys:field];
-                        [responseBuffer addObject:dict];
-                    }
-                }
-                @catch(NSException *e){
-                    NSDictionary *dict = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                          [row valueForKey:@"_id"], @"id",
-                                          [row valueForKey:@"_rev"], @"rev",
-                                          [error localizedDescription], @"description",
-                                          [error localizedFailureReason], @"cause",
-                                          nil];
-                    NSLog( @"ERROR %@", dict );
+            for (CBLQueryResult* row in result) {
+                if([field count]==0){
+                    [responseBuffer addObject:[[row toDictionary] objectForKey:dbName]];
+                }else{
+                    [responseBuffer addObject:[row toDictionary]];
                 }
             }
-           
-           /* [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[[NSString stringWithFormat:@"[%@]", [responseBuffer componentsJoinedByString:@","]] dataUsingEncoding:NSUTF8StringEncoding]];*/
+
             NSData *data = [NSJSONSerialization dataWithJSONObject:responseBuffer
                                                            options:0
                                                              error:&error];
