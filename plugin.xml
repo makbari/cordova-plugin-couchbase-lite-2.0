@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android"
-        id="cordova-plugin-couchbase-lite-2.0" version="1.0.1">
+        id="cordova-plugin-couchbase-lite-2.0" version="1.0.2">
   <name>Cordova Couchbase Lite 2.0</name>
   <description>Provides Typescript and ScalaJS APIs over the provided REST API.</description>
   <license>Apache 2.0</license>
