@@ -28,14 +28,24 @@ static NSThread *cblThread;
              CBLDatabase *db = dbs[dbName];
             [db addChangeListener:^(CBLDatabaseChange *change ) {
                 
-
-
+                NSMutableDictionary * result=[[NSMutableDictionary alloc] init];
+                [result setObject:@"Change detected" forKey:@"event"];
+                [result setObject:dbName forKey:@"database"];
+                NSMutableArray *docArray=[[NSMutableArray alloc] init];
+                for(NSString *idDoc in change.documentIDs){
+                    NSDictionary *doc= [[dbs[dbName] documentWithID:idDoc] toDictionary];
+                    if(doc){
+                        [docArray addObject:doc];
+                    }
+                }
+               [result setObject:docArray forKey:@"results"];
+               
 
                     CDVPluginResult* pluginResult =
                     [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                      messageAsString:[[NSString alloc] initWithData: [NSJSONSerialization dataWithJSONObject:change.documentIDs
-                                                                                                                                    options:0 //or NSJSONWritingPrettyPrinted
-                                                                                                                                     error:nil] encoding:NSUTF8StringEncoding]];
+                                      messageAsString:[[NSString alloc] initWithData: [NSJSONSerialization dataWithJSONObject:result
+                                                            options:0 //or NSJSONWritingPrettyPrinted
+                                                            error:nil] encoding:NSUTF8StringEncoding]];
                     [pluginResult setKeepCallbackAsBool:YES];
                     [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
             }];
@@ -290,7 +300,10 @@ static NSThread *cblThread;
         if([urlCommand.arguments count]>5){
             channlesArray=[urlCommand.arguments objectAtIndex:5];
         }
-        
+        BOOL background=false;
+         if([urlCommand.arguments count]>6){
+             background=[[urlCommand.arguments objectAtIndex:6] boolValue];
+         }
 
         if(replications == nil){replications = [NSMutableDictionary dictionary];}
 
@@ -323,7 +336,7 @@ static NSThread *cblThread;
         if(channlesArray!=NULL){
             config.channels=channlesArray;
         }
-        config.allowReplicatingInBackground=true;
+        config.allowReplicatingInBackground=background;
         config.continuous = true;
         
         //config.authenticator = [[CBLBasicAuthenticator alloc] initWithUsername:user password:pass];
@@ -517,6 +530,9 @@ static NSThread *cblThread;
         if([urlCommand.arguments count]>7 && ![[urlCommand.arguments objectAtIndex:7] isEqual:[NSNull null]]){
            queryLimit= [CBLQueryLimit limit:[CBLQueryExpression integer:[[urlCommand.arguments objectAtIndex:7] intValue]]];
         }
+        if([urlCommand.arguments count]>8 && ![[urlCommand.arguments objectAtIndex:8] isEqual:[NSNull null]]){
+            queryLimit= [CBLQueryLimit limit:[CBLQueryExpression integer:[[urlCommand.arguments objectAtIndex:7] intValue]] offset:[CBLQueryExpression integer:[[urlCommand.arguments objectAtIndex:8] intValue]]];
+        }
         NSError *error;
         if ([isLocal isEqualToString:@"true"]) {
 
@@ -603,6 +619,9 @@ static NSThread *cblThread;
                 }
                 CFTimeInterval endQuery = CFAbsoluteTimeGetCurrent();
                 NSLog(@"%@ Query %@ Time: %g",dbName,[query description], endQuery - startQuery);
+                if(endQuery - startQuery>1){
+                    NSLog(@"%@ Query Explain time: %g query: %@",dbName, endQuery - startQuery,[query explain:nil]);
+                }
                 NSData *data = [NSJSONSerialization dataWithJSONObject:responseBuffer
                                                                options:0
                                                                  error:&error];
@@ -765,7 +784,7 @@ static NSThread *cblThread;
             if(doc != nil){
                 for (NSString* key in jsonDictionary) {
 
-                    [doc setString:[jsonDictionary objectForKey:key] forKey:key];
+                    [doc setValue:[jsonDictionary objectForKey:key] forKey:key];
                 }
 
 
