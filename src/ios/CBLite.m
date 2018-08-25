@@ -815,6 +815,51 @@ static NSThread *cblThread;
     });
 }
 
+
+
+- (void)deleteDocument:(CDVInvokedUrlCommand *)urlCommand {
+    dispatch_cbl_async(cblThread, ^{
+        NSString* dbName = [urlCommand.arguments objectAtIndex:0];
+        NSString* docId = [urlCommand.arguments objectAtIndex:1];
+        NSString* isLocal = [urlCommand.arguments objectAtIndex:2];
+        
+        if([isLocal isEqualToString:@"local"]){
+            //            NSError * _Nullable __autoreleasing * error2 = NULL;
+            //            [dbs[dbName] putLocalDocument:jsonDictionary withID:docId error: error2];
+        }
+        else {
+            
+            CBLDatabase *db = dbs[dbName];
+            CBLMutableDocument* doc = [[db  documentWithID: docId] toMutable];
+            if(doc != nil){
+                
+                NSError *error;
+                
+                if (![db deleteDocument:doc error:&error]) {
+                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"updated failed: %@",[error description]]];
+                    [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+                }
+                else {
+                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Document deleted"];
+                    [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+                }
+            }
+            else {
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Delete failed, document not found"];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+            }
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
 #pragma mark Plugin Boilerplate
 - (void)pluginInitialize {
     [self launchCouchbaseLite];
