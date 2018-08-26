@@ -836,7 +836,7 @@ static NSThread *cblThread;
                 NSError *error;
                 
                 if (![db deleteDocument:doc error:&error]) {
-                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"updated failed: %@",[error description]]];
+                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"delete failed: %@",[error description]]];
                     [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
                 }
                 else {
