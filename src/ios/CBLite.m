@@ -482,7 +482,12 @@ static NSThread *cblThread;
         for (NSString* s in field) {
             if([s isEqualToString:@"COUNT"]){
                 [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction count:[CBLQueryExpression all]] as:s]];
-            }else{
+            }else if([s containsString:@"MAX"]){
+                NSRange needleRange = NSMakeRange(4, [s length]-5);
+                NSString *Maxfiled=[s substringWithRange:needleRange];
+                [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction max:[CBLQueryExpression property:Maxfiled]] as:Maxfiled]];
+            }
+            else{
             
                 [marr addObject:[CBLQuerySelectResult property:s]];
             }
