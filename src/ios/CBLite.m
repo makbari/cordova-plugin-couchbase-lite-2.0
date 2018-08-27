@@ -482,12 +482,7 @@ static NSThread *cblThread;
         for (NSString* s in field) {
             if([s isEqualToString:@"COUNT"]){
                 [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction count:[CBLQueryExpression all]] as:s]];
-            }else if([s containsString:@"MAX"]){
-                NSRange needleRange = NSMakeRange(4, [s length]-5);
-                NSString *Maxfiled=[s substringWithRange:needleRange];
-                [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction max:[CBLQueryExpression property:Maxfiled]] as:Maxfiled]];
-            }
-            else{
+            }else{
             
                 [marr addObject:[CBLQuerySelectResult property:s]];
             }
@@ -595,10 +590,19 @@ static NSThread *cblThread;
 
 
               NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
-
+            CBLDatabase *db=dbs[dbName];
+            if(!db){
+             
+                
+                NSString* response=@"Db not started";
+                CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
+                
+                [pluginResult setKeepCallbackAsBool:YES];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+            }else{
             CBLQuery *query;
             query= [CBLQueryBuilder select:selectExpression
-                                                 from:[CBLQueryDataSource database:dbs[dbName]]
+                                                 from:[CBLQueryDataSource database:db]
                                                 where:whereExpression groupBy:groupbyField having:nil orderBy:orderByField limit:queryLimit];
          
             CFTimeInterval startQuery = CFAbsoluteTimeGetCurrent();
@@ -637,6 +641,8 @@ static NSThread *cblThread;
                 [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
 
             }
+         }
+            
         }
     });
 }
@@ -841,7 +847,7 @@ static NSThread *cblThread;
                 NSError *error;
                 
                 if (![db deleteDocument:doc error:&error]) {
-                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"delete failed: %@",[error description]]];
+                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"updated failed: %@",[error description]]];
                     [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
                 }
                 else {
