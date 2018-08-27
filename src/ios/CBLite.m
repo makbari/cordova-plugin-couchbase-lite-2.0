@@ -277,8 +277,9 @@ static NSThread *cblThread;
         }else{
             CBLDatabase* db=dbs[dbName];
             [db delete:&error];
+             [dbs removeObjectForKey:dbName];
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
-            [dbs removeObjectForKey:dbName];
+           
         }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
     });
