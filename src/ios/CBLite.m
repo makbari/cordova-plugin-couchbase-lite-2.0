@@ -275,7 +275,15 @@ static NSThread *cblThread;
             
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"DB not started"];
         }else{
+            
             CBLDatabase* db=dbs[dbName];
+            //stop all replication
+            for (NSString *r in replications) {
+                if([r containsString:dbName]){
+                    CBLReplicator * repl = replications[r];
+                    [repl stop];
+                }
+            }
             [db delete:&error];
              [dbs removeObjectForKey:dbName];
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
