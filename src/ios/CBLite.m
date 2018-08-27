@@ -278,7 +278,7 @@ static NSThread *cblThread;
             CBLDatabase* db=dbs[dbName];
             [db delete:&error];
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
-            
+            [dbs removeObjectForKey:dbName];
         }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
     });
@@ -339,7 +339,7 @@ static NSThread *cblThread;
         config.allowReplicatingInBackground=background;
         config.continuous = true;
         
-        //config.authenticator = [[CBLBasicAuthenticator alloc] initWithUsername:user password:pass];
+        config.authenticator = [[CBLBasicAuthenticator alloc] initWithUsername:user password:pass];
         CBLReplicator *replicator = [[CBLReplicator alloc] initWithConfig:config];
         [replicator start];
         replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] = replicator;
@@ -501,6 +501,9 @@ static NSThread *cblThread;
         NSString* dbName = [urlCommand.arguments objectAtIndex:0];
 
         NSArray *field = [urlCommand.arguments objectAtIndex:1];
+        if(![field isKindOfClass:[NSArray class]]){
+            field=[[NSArray alloc] init];
+        }
         NSString *searchQuery = [urlCommand.arguments objectAtIndex:2];
         NSString *indexing=[urlCommand.arguments objectAtIndex:3];
         NSString *isLocal = [urlCommand.arguments objectAtIndex:4];
