@@ -518,7 +518,7 @@ static NSThread *cblThread;
         NSString *isLocal = [urlCommand.arguments objectAtIndex:4];
         
         NSArray *groupbyField;
-        if([urlCommand.arguments count]>5 && [[urlCommand.arguments objectAtIndex:5] count]>0){
+        if([urlCommand.arguments count]>5 && [(NSArray*)[urlCommand.arguments objectAtIndex:5] count]>0){
             NSMutableArray* mutArr=[[NSMutableArray alloc] init];
             for(NSString* Gfi in [urlCommand.arguments objectAtIndex:5]){
                 [mutArr addObject:[CBLQueryExpression property:Gfi]];
@@ -526,7 +526,7 @@ static NSThread *cblThread;
             groupbyField=mutArr;
         }
         NSArray *orderByField;
-        if([urlCommand.arguments count]>6 && [[urlCommand.arguments objectAtIndex:6] count]>0){
+        if([urlCommand.arguments count]>6 && [(NSArray*)[urlCommand.arguments objectAtIndex:6] count]>0){
             NSMutableArray* mutArr=[[NSMutableArray alloc] init];
             for(NSDictionary* orderByF in [urlCommand.arguments objectAtIndex:6]){
                 //[mutArr addObject:[CBLQueryExpression property:Gfi]];
