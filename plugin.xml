@@ -19,17 +19,11 @@
     </config-file>
     <header-file src="src/ios/CBLite.h"/>
     <source-file src="src/ios/CBLite.m"/>
-
     <framework src="libicucore.dylib"/>
-
-
     <framework src="SystemConfiguration.framework"/>
     <framework src="JavaScriptCore.framework"/>
-
-
-	<framework custom="true" embed="true" src="lib/ios/CouchbaseLite.framework"/>
+    <framework custom="true" embed="true" src="lib/ios/CouchbaseLite.framework"/>
     <source-file src="lib/ios/CouchbaseLite.framework" target-dir="lib" framework="true" />
-
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLArray.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLArrayFragment.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLAuthenticator.h"/>
@@ -85,8 +79,6 @@
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLURLEndpoint.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLValueIndex.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CouchbaseLite.h"/>
-
-
   </platform>
   <platform name="android">
     <config-file target="res/xml/config.xml" parent="/*">
