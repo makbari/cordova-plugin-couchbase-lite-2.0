@@ -81,7 +81,7 @@
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CouchbaseLite.h"/>
   </platform>
   <platform name="android">
-      <config-file target="res/xml/config.xml" parent="/*">
+    <config-file target="res/xml/config.xml" parent="/*">
       <feature name="CBLite">
         <param name="android-package" value="com.couchbase.cblite.phonegap.CBLite"/>
         <param name="onload" value="true"/>
@@ -89,9 +89,9 @@
     </config-file>
     <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
     <framework src="build-extras.gradle" custom="true" type="gradleReference"/>
-    <resource-file src="src/android/CBLite.java" target-dir="src/com/couchbase/cblite/phonegap"/>
-    <resource-file src="lib/android/commons-io-2.0.1.jar" target-dir="libs"/>
-    <framework src="com.squareup.okhttp3:okhttp:3.9.1"/>
-    <framework src="com.squareup.okio:okio:1.13.0"/>
+    <source-file src="src/android/CBLite.java" target-dir="src/com/couchbase/cblite/phonegap"/>
+    <source-file src="lib/android/commons-io-2.0.1.jar" target-dir="libs"/>
+	<framework src="com.squareup.okhttp3:okhttp:3.9.1"/>
+	<framework src="com.squareup.okio:okio:1.13.0"/>
   </platform>
 </plugin>
