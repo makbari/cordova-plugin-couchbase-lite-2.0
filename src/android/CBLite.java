@@ -217,8 +217,15 @@ public class CBLite extends CordovaPlugin {
                             m.stop();
                         }
                         mReplicators.remove(dbName);
-
-                        db.delete();
+                        boolean done=false;
+                        while(!done) {
+                            try {
+                                db.delete();
+                                done=true;
+                            } catch (Exception e) {
+                                Thread.sleep(1000);
+                            }
+                        }
                         dbs.remove(dbName);
                         callback.success("CBL db delete success");
                     }
@@ -554,6 +561,7 @@ public class CBLite extends CordovaPlugin {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 try {
+                    Thread.sleep(500);
                     String dbName = args.getString(0);
                     URI uri = new URI(args.getString(1));
                     String user = args.getString(2);
