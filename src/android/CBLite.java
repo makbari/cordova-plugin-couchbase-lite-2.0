@@ -108,6 +108,8 @@ public class CBLite extends CordovaPlugin {
             sync(args, callback);
         } else if (action.equals("resetCallbacks")) {
             resetCallbacks(args, callback);
+        }else if (action.equals("deleteDatabase")) {
+            deleteDatabase(args, callback);
         }
 
         //READ
@@ -197,6 +199,37 @@ public class CBLite extends CordovaPlugin {
         //        callbacks.clear();
         //        callback.success("reset callbacks");
     }
+
+
+    private void deleteDatabase(final JSONArray args, final CallbackContext callback) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    String dbName = args.getString(0);
+
+                    if(!dbs.containsKey(dbName)){
+                        callback.error("DB not started");
+                    }else {
+                        Database db=dbs.get(dbName);
+
+                        Replicator m=mReplicators.get(dbName);
+                        if(m!=null) {
+                            m.stop();
+                        }
+                        mReplicators.remove(dbName);
+
+                        db.delete();
+                        dbs.remove(dbName);
+                        callback.success("CBL db delete success");
+                    }
+                } catch (final Exception e) {
+                    callback.error(e.getMessage());
+                }
+            }
+        });
+    }
+
+
 
     private void uploadLogs(final JSONArray args, final CallbackContext callback) {
         //        cordova.getThreadPool().execute(new Runnable() {
@@ -423,16 +456,39 @@ public class CBLite extends CordovaPlugin {
     }
 
     private void info(final JSONArray args, final CallbackContext callback) {
-        //        cordova.getThreadPool().execute(new Runnable() {
-        //            public void run() {
-        //                try {
-        //                    String dbName = args.getString(0);
-        //                    callback.success(dbs.get(dbName).getDocumentCount());
-        //                } catch (final Exception e) {
-        //                    callback.error(e.getMessage());
-        //                }
-        //            }
-        //        });
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    String dbName = args.getString(0);
+                    HashMap<String,String> res= new HashMap<String, String>();
+                    if(!dbs.containsKey(dbName)){
+                        res.put("status","NOTSTARTED");
+                    }else {
+                        res.put("status","STARTED");
+
+                        Database db=dbs.get(dbName);
+
+                        Replicator m=mReplicators.get(dbName);
+                        if(m!=null) {
+
+                            res.put("replication",m.getStatus().toString());
+                        }
+
+                        Query query = QueryBuilder.select(SelectResult.property("id"))
+                                .from(DataSource.database(dbs.get(dbName)));
+                        ResultSet results = query.execute();
+
+
+                        res.put("objectCount",String.valueOf(results.allResults().size()));
+
+                        JSONObject obj = new JSONObject(res);
+                        callback.success(obj);
+                    }
+                } catch (final Exception e) {
+                    callback.error(e.getMessage());
+                }
+            }
+        });
     }
 
     private void initDb(final JSONArray args, final CallbackContext callback) {
@@ -502,14 +558,26 @@ public class CBLite extends CordovaPlugin {
                     URI uri = new URI(args.getString(1));
                     String user = args.getString(2);
                     String pass = args.getString(3);
+                    String replicationType="PushPull";
+                    if(args.length()>4){
+                        replicationType=args.getString(4);
+                    }
 
                     Authenticator authenticator = new BasicAuthenticator(user, pass);
 
                     Endpoint endpoint = new URLEndpoint(uri);
                     ReplicatorConfiguration config = new ReplicatorConfiguration(dbs.get(dbName), endpoint);
                     config.setAuthenticator(authenticator)
-                            .setContinuous(true)
-                            .setReplicatorType(ReplicatorConfiguration.ReplicatorType.PUSH_AND_PULL);
+                            .setContinuous(true);
+                    if(replicationType.equals("PushPull")){
+                        config.setReplicatorType(ReplicatorConfiguration.ReplicatorType.PUSH_AND_PULL);
+                    }else if(replicationType.equals("Push")){
+                        config.setReplicatorType(ReplicatorConfiguration.ReplicatorType.PUSH);
+                    }else if(replicationType.equals("Pull")){
+                        config.setReplicatorType(ReplicatorConfiguration.ReplicatorType.PULL);
+                    }
+
+
                     Replicator replicator = new Replicator(config);
 
                     mReplicators.put(dbName, replicator);
