@@ -91,7 +91,7 @@
     <framework src="build-extras.gradle" custom="true" type="gradleReference"/>
     <source-file src="src/android/CBLite.java" target-dir="src/com/couchbase/cblite/phonegap"/>
     <source-file src="lib/android/commons-io-2.0.1.jar" target-dir="libs"/>
-	<framework src="com.squareup.okhttp3:okhttp:3.3.1"/>
-	<framework src="com.squareup.okio:okio:1.8.0"/>
+	<framework src="com.squareup.okhttp3:okhttp:3.9.1"/>
+	<framework src="com.squareup.okio:okio:1.13.0"/>
   </platform>
 </plugin>
