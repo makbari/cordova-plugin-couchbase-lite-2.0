@@ -7,10 +7,8 @@
   <js-module src="www/cblite.js" name="CouchbaseLite">
     <clobbers target="cbl"/>
   </js-module>
-  <js-module src="www/encoding.js" name="TextDecoder">
-  </js-module>
-  <js-module src="www/encoding-indexes.js" name="encoding-indexes">
-  </js-module>
+  <asset src="www/encoding.js" target="js/encoding.js"/>
+  <asset src="www/encoding-indexes.js" target="js/encoding-indexes.js"/>
   <engines>
     <engine name="cordova" version=">=6.0.0"/>
   </engines>
