@@ -8,10 +8,8 @@
     <clobbers target="cbl"/>
   </js-module>
   <js-module src="www/encoding.js" name="TextDecoder">
-    <clobbers target="TextDecoder"/>
   </js-module>
   <js-module src="www/encoding-indexes.js" name="encoding-indexes">
-    <clobbers target="encoding-indexes"/>
   </js-module>
   <engines>
     <engine name="cordova" version=">=6.0.0"/>
