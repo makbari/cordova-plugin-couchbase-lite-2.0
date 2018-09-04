@@ -705,6 +705,7 @@ public class CBLite extends CordovaPlugin {
                             Query query = QueryBuilder.select(SelectResult.all())
                                     .from(DataSource.database(dbs.get(dbName)))
                                     .where(whereExpression);
+                            System.out.println("Query explain "+ query.explain());
                             ResultSet results = query.execute();
                             final List<Result> resultsList = results.allResults();
 
@@ -746,7 +747,11 @@ public class CBLite extends CordovaPlugin {
                 && !TextUtils.isEmpty(method) && concatenator != null) {
 
             if (method.equalsIgnoreCase("equalTo")) {
-                whereExpression = Expression.property(field).equalTo(Expression.string(where));
+                if(where.equalsIgnoreCase("true")|| where.equalsIgnoreCase("false")) {
+                    whereExpression = Expression.property(field).equalTo(Expression.booleanValue(where.equalsIgnoreCase("true")));
+                }else{
+                    whereExpression = Expression.property(field).equalTo(Expression.string(where));
+                }
             } else if (method.equalsIgnoreCase("contains")) {
                 whereExpression = ArrayFunction.contains(Expression.property(field), Expression.string(where));
             }
