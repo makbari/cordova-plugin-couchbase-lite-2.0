@@ -2,6 +2,7 @@ package com.couchbase.cblite.phonegap;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.JsonReader;
 import android.util.Log;
 
 import com.couchbase.lite.ArrayFunction;
@@ -439,7 +440,7 @@ public class CBLite extends CordovaPlugin {
                             callback.sendPluginResult(result);
                         }
                     });
-                //    replicator.stop();
+                    //    replicator.stop();
                     replicator.start();
                 } catch (final Exception e) {
                     callback.error(e.getMessage());
@@ -570,13 +571,24 @@ public class CBLite extends CordovaPlugin {
                     if(args.length()>4){
                         replicationType=args.getString(4);
                     }
-
+                    JSONArray channels=null;
+                    if(args.length()>5 && !args.getString(5).equalsIgnoreCase("")){
+                        channels=args.getJSONArray(5);
+                    }
+                    Boolean background=false;
+                    if(args.length()>6){
+                        background=args.getBoolean(6);
+                    }
+                    Boolean continous=true;
+                    if(args.length()>7){
+                        continous=args.getBoolean(7);
+                    }
                     Authenticator authenticator = new BasicAuthenticator(user, pass);
 
                     Endpoint endpoint = new URLEndpoint(uri);
                     ReplicatorConfiguration config = new ReplicatorConfiguration(dbs.get(dbName), endpoint);
                     config.setAuthenticator(authenticator)
-                            .setContinuous(true);
+                            .setContinuous(continous);
                     if(replicationType.equals("PushPull")){
                         config.setReplicatorType(ReplicatorConfiguration.ReplicatorType.PUSH_AND_PULL);
                     }else if(replicationType.equals("Push")){
@@ -754,6 +766,21 @@ public class CBLite extends CordovaPlugin {
                 }
             } else if (method.equalsIgnoreCase("contains")) {
                 whereExpression = ArrayFunction.contains(Expression.property(field), Expression.string(where));
+            }else if (method.equalsIgnoreCase("in")) {
+
+                try {
+                    JSONArray obj= new JSONArray(where);
+                    Expression[] whereArray=new Expression[obj.length()];
+                    for (int i=0; i < obj.length(); i++) {
+                        String o=obj.getString(i);
+                        whereArray[i]=Expression.string(o);
+                    }
+                    
+                    
+                    whereExpression = Expression.property(field).in(whereArray);
+                }catch(Throwable t){
+                    
+                }
             }
         }
 

@@ -306,12 +306,16 @@ static NSThread *cblThread;
             replicationType=[urlCommand.arguments objectAtIndex:4];
         }
         NSArray* channlesArray=NULL;
-        if([urlCommand.arguments count]>5){
+        if([urlCommand.arguments count]>5 && ![[urlCommand.arguments objectAtIndex:5] isEqualToString:@""]){
             channlesArray=[urlCommand.arguments objectAtIndex:5];
         }
         BOOL background=false;
-        if([urlCommand.arguments count]>6){
+        if([urlCommand.arguments count]>6 && ![[urlCommand.arguments objectAtIndex:6] isEqualToString:@""]){
             background=[[urlCommand.arguments objectAtIndex:6] boolValue];
+        }
+         BOOL continous=true;
+        if([urlCommand.arguments count]>7 && ![[urlCommand.arguments objectAtIndex:7] isEqualToString:@""]){
+            continous=[[urlCommand.arguments objectAtIndex:7] boolValue];
         }
         
         if(replications == nil){replications = [NSMutableDictionary dictionary];}
