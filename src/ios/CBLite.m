@@ -313,7 +313,7 @@ static NSThread *cblThread;
         if([urlCommand.arguments count]>6 && ![[urlCommand.arguments objectAtIndex:6] isEqualToString:@""]){
             background=[[urlCommand.arguments objectAtIndex:6] boolValue];
         }
-         BOOL continous=true;
+        BOOL continous=true;
         if([urlCommand.arguments count]>7 && ![[urlCommand.arguments objectAtIndex:7] isEqualToString:@""]){
             continous=[[urlCommand.arguments objectAtIndex:7] boolValue];
         }
@@ -472,6 +472,17 @@ static NSThread *cblThread;
     else if ([method isEqualToString:@"contains"]) {
         return [CBLQueryArrayFunction contains:[CBLQueryExpression property:field]
                                          value:[CBLQueryExpression string:where]];
+    }
+    else if ([method isEqualToString:@"in"]) {
+        
+        NSMutableArray *arrIn= [[NSMutableArray alloc] init];
+        
+        for (int i=0; i<[(NSArray*)where count]; i++) {
+            [arrIn addObject:[CBLQueryExpression string:[(NSArray*)where objectAtIndex:i]]];
+        }
+        
+        
+        return [[CBLQueryExpression property:field] in:arrIn];
     }
     else if ([method isEqualToString:@"exist"]) {
         return [[CBLQueryExpression property:field] notNullOrMissing];
