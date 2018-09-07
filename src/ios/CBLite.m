@@ -294,6 +294,9 @@ static NSThread *cblThread;
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:
                                 [NSString stringWithFormat:@"DB error %@",[error description] ]];
             }
+            [db delete:&error];
+            [dbs removeObjectForKey:dbName];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
             
         }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
@@ -313,15 +316,15 @@ static NSThread *cblThread;
             replicationType=[urlCommand.arguments objectAtIndex:4];
         }
         NSArray* channlesArray=NULL;
-        if([urlCommand.arguments count]>5 && ![[urlCommand.arguments objectAtIndex:5] isEqualToString:@""]){
+        if([urlCommand.arguments count]>5 && [[urlCommand.arguments objectAtIndex:5] isKindOfClass:[NSArray class]]){
             channlesArray=[urlCommand.arguments objectAtIndex:5];
         }
         BOOL background=false;
-        if([urlCommand.arguments count]>6 && ![[urlCommand.arguments objectAtIndex:6] isEqualToString:@""]){
+        if([urlCommand.arguments count]>6 && ![[urlCommand.arguments objectAtIndex:6] isKindOfClass:[NSString class]]){
             background=[[urlCommand.arguments objectAtIndex:6] boolValue];
         }
         BOOL continous=true;
-        if([urlCommand.arguments count]>7 && ![[urlCommand.arguments objectAtIndex:7] isEqualToString:@""]){
+        if([urlCommand.arguments count]>7 && ![[urlCommand.arguments objectAtIndex:6] isKindOfClass:[NSString class]]){
             continous=[[urlCommand.arguments objectAtIndex:7] boolValue];
         }
         
