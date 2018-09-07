@@ -17,40 +17,40 @@ static NSThread *cblThread;
 
 #pragma mark UTIL
 - (void)changesDatabase:(CDVInvokedUrlCommand *)urlCommand {
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
-    [pluginResult setKeepCallbackAsBool:YES];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-    
-    [callbacks addObject:urlCommand.callbackId];
-    
-    dispatch_cbl_async(cblThread, ^{
-        NSString* dbName = [urlCommand.arguments objectAtIndex:0];
-        CBLDatabase *db = dbs[dbName];
-        [db addChangeListener:^(CBLDatabaseChange *change ) {
-            
-            NSMutableDictionary * result=[[NSMutableDictionary alloc] init];
-            [result setObject:@"Change detected" forKey:@"event"];
-            [result setObject:dbName forKey:@"database"];
-            NSMutableArray *docArray=[[NSMutableArray alloc] init];
-            for(NSString *idDoc in change.documentIDs){
-                NSDictionary *doc= [[dbs[dbName] documentWithID:idDoc] toDictionary];
-                if(doc){
-                    [docArray addObject:doc];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+
+        [callbacks addObject:urlCommand.callbackId];
+
+        dispatch_cbl_async(cblThread, ^{
+            NSString* dbName = [urlCommand.arguments objectAtIndex:0];
+             CBLDatabase *db = dbs[dbName];
+            [db addChangeListener:^(CBLDatabaseChange *change ) {
+                
+                NSMutableDictionary * result=[[NSMutableDictionary alloc] init];
+                [result setObject:@"Change detected" forKey:@"event"];
+                [result setObject:dbName forKey:@"database"];
+                NSMutableArray *docArray=[[NSMutableArray alloc] init];
+                for(NSString *idDoc in change.documentIDs){
+                    NSDictionary *doc= [[dbs[dbName] documentWithID:idDoc] toDictionary];
+                    if(doc){
+                        [docArray addObject:doc];
+                    }
                 }
-            }
-            [result setObject:docArray forKey:@"results"];
-            
-            
-            CDVPluginResult* pluginResult =
-            [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                              messageAsString:[[NSString alloc] initWithData: [NSJSONSerialization dataWithJSONObject:result
-                                                                                                              options:0 //or NSJSONWritingPrettyPrinted
-                                                                                                                error:nil] encoding:NSUTF8StringEncoding]];
-            [pluginResult setKeepCallbackAsBool:YES];
-            [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-        }];
-        
-    });
+               [result setObject:docArray forKey:@"results"];
+               
+
+                    CDVPluginResult* pluginResult =
+                    [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                      messageAsString:[[NSString alloc] initWithData: [NSJSONSerialization dataWithJSONObject:result
+                                                            options:0 //or NSJSONWritingPrettyPrinted
+                                                            error:nil] encoding:NSUTF8StringEncoding]];
+                    [pluginResult setKeepCallbackAsBool:YES];
+                    [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+            }];
+
+        });
 }
 
 
@@ -80,24 +80,24 @@ static NSThread *cblThread;
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
     [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-    
+
     [callbacks addObject:urlCommand.callbackId];
-    
+
     dispatch_cbl_async(cblThread, ^{
-        
-        
+
+
         NSString* dbName = [urlCommand.arguments objectAtIndex:0];
         for (NSString *r in replications) {
             if([r containsString:dbName]){
                 [replications[r] addChangeListener:^(CBLReplicatorChange *change) {
                     NSString *response= [CBLite getStringFromStatus:change.status withReplicatorName:r andDatabase:dbName];
                     
-                    
+
                     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:response];
                     [pluginResult setKeepCallbackAsBool:YES];
                     [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-                    
-                    
+
+
                 }];
             }
         }
@@ -162,45 +162,45 @@ static NSThread *cblThread;
 }
 
 - (void)info:(CDVInvokedUrlCommand *)urlCommand {
-    dispatch_cbl_async(cblThread, ^{
-        NSString* dbName = [urlCommand.arguments objectAtIndex:0];
-        NSMutableDictionary* dict=[[NSMutableDictionary alloc] init];
-        
-        if(!dbs[dbName]){
-            [dict setObject:@"NOTSTARTED" forKey:@"status"];
+        dispatch_cbl_async(cblThread, ^{
+            NSString* dbName = [urlCommand.arguments objectAtIndex:0];
+            NSMutableDictionary* dict=[[NSMutableDictionary alloc] init];
             
-        }else{
+            if(!dbs[dbName]){
+                 [dict setObject:@"NOTSTARTED" forKey:@"status"];
+               
+            }else{
             
             CBLDatabase *db = dbs[dbName];
             [dict setObject:@"STARTED" forKey:@"status"];
-            
+           
             [dict setObject:[db indexes] forKey:@"dbIndex"];
-            for (NSString *r in replications) {
-                if([r containsString:dbName]){
-                    CBLReplicator* repl= replications[r];
-                    NSError* error;
-                    NSString *response= [NSJSONSerialization
-                                         JSONObjectWithData: [[CBLite getStringFromStatus:repl.status withReplicatorName:r andDatabase:dbName] dataUsingEncoding:NSUTF8StringEncoding]
-                                         options:0
-                                         error:&error];
-                    [dict setObject:response forKey:@"replication"];
+                for (NSString *r in replications) {
+                    if([r containsString:dbName]){
+                        CBLReplicator* repl= replications[r];
+                        NSError* error;
+                        NSString *response= [NSJSONSerialization
+                                             JSONObjectWithData: [[CBLite getStringFromStatus:repl.status withReplicatorName:r andDatabase:dbName] dataUsingEncoding:NSUTF8StringEncoding]
+                                             options:0
+                                             error:&error];
+                        [dict setObject:response forKey:@"replication"];
+                    }
                 }
+                CBLQuery* idQuery = [CBLQueryBuilder select:@[[CBLQuerySelectResult expression:[CBLQueryMeta id]]]
+                                                       from:[CBLQueryDataSource database:dbs[dbName]]
+                                     ];
+                 CBLQueryResultSet *result = [idQuery execute:nil];
+                
+                [dict setValue:[NSNumber numberWithLong:[[result allResults] count]] forKey:@"objectCount"];
             }
-            CBLQuery* idQuery = [CBLQueryBuilder select:@[[CBLQuerySelectResult expression:[CBLQueryMeta id]]]
-                                                   from:[CBLQueryDataSource database:dbs[dbName]]
-                                 ];
-            CBLQueryResultSet *result = [idQuery execute:nil];
-            
-            [dict setValue:[NSNumber numberWithLong:[[result allResults] count]] forKey:@"objectCount"];
-        }
-        NSError* error;
-        NSData *data = [NSJSONSerialization dataWithJSONObject:dict
-                                                       options:0
-                                                         error:&error];
-        NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:response];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-    });
+            NSError* error;
+            NSData *data = [NSJSONSerialization dataWithJSONObject:dict
+                                                           options:0
+                                                             error:&error];
+            NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:response];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+        });
 }
 
 - (void)initDb:(CDVInvokedUrlCommand *)urlCommand {
@@ -208,13 +208,13 @@ static NSThread *cblThread;
         NSString* dbName = [urlCommand.arguments objectAtIndex:0];
         NSArray* index =[[NSArray alloc] init];
         if([urlCommand.arguments count]>1){
-            index =[urlCommand.arguments objectAtIndex:1];
+        index =[urlCommand.arguments objectAtIndex:1];
         }
         NSError *error;
         if(dbs == nil){dbs = [NSMutableDictionary dictionary];}
         CDVPluginResult* pluginResult;
         if(!dbs[dbName]){
-            
+        
             CBLDatabase* db=[[CBLDatabase alloc] initWithName:dbName error:&error];
             dbs[dbName] =db;
             if([index count]>0){
@@ -235,9 +235,9 @@ static NSThread *cblThread;
             if (!dbs[dbName]) pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Could not init DB"];
             else pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db init success"];
         }else{
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db init already started"];
+           pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db init already started"];
         }
-        
+       
         
         [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
     });
@@ -247,7 +247,7 @@ static NSThread *cblThread;
     NSString* dbName = [urlCommand.arguments objectAtIndex:0];
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsNSUInteger:[dbs[dbName] sequence]];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-    
+
 }
 
 
@@ -282,11 +282,19 @@ static NSThread *cblThread;
                 if([r containsString:dbName]){
                     CBLReplicator * repl = replications[r];
                     [repl stop];
+                    
                 }
             }
-            [db delete:&error];
-            [dbs removeObjectForKey:dbName];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
+            [NSThread sleepForTimeInterval:1.0f];
+           
+                [db delete:&error];
+                if(!error){
+                     [dbs removeObjectForKey:dbName];
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
+                }else{
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:
+                                    [NSString stringWithFormat:@"DB error %@",[error description] ]];
+                }
             
         }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
@@ -306,20 +314,16 @@ static NSThread *cblThread;
             replicationType=[urlCommand.arguments objectAtIndex:4];
         }
         NSArray* channlesArray=NULL;
-        if([urlCommand.arguments count]>5 && ![[urlCommand.arguments objectAtIndex:5] isEqualToString:@""]){
+        if([urlCommand.arguments count]>5){
             channlesArray=[urlCommand.arguments objectAtIndex:5];
         }
         BOOL background=false;
-        if([urlCommand.arguments count]>6 && ![[urlCommand.arguments objectAtIndex:6] isEqualToString:@""]){
-            background=[[urlCommand.arguments objectAtIndex:6] boolValue];
-        }
-        BOOL continous=true;
-        if([urlCommand.arguments count]>7 && ![[urlCommand.arguments objectAtIndex:7] isEqualToString:@""]){
-            continous=[[urlCommand.arguments objectAtIndex:7] boolValue];
-        }
-        
+         if([urlCommand.arguments count]>6){
+             background=[[urlCommand.arguments objectAtIndex:6] boolValue];
+         }
+
         if(replications == nil){replications = [NSMutableDictionary dictionary];}
-        
+
         if(replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] != nil){ [replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] stop]; }
         //        if(replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pull"]] != nil){ [replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pull"]] stop]; }
         //
@@ -373,7 +377,7 @@ static NSThread *cblThread;
         CBLQuery* idQuery = [CBLQueryBuilder select:@[[CBLQuerySelectResult all]]
                                                from:[CBLQueryDataSource database:dbs[dbName]]
                              ];
-        
+
         NSError *idQueryError;
         NSMutableArray *allIds = [NSMutableArray array];
         CBLQueryResultSet *result = [idQuery execute:&idQueryError];
@@ -382,11 +386,11 @@ static NSThread *cblThread;
                 [allIds addObject:[row valueForKey:dbName]];
             }
         }
-        
+
         NSMutableArray *idBatches = [NSMutableArray array];
         NSUInteger remainingIds = [allIds count];
         int j = 0;
-        
+
         while(remainingIds){
             @autoreleasepool {
                 NSRange batchRange = NSMakeRange(j, MIN(batchSize, remainingIds));
@@ -396,13 +400,13 @@ static NSThread *cblThread;
                 j += batchRange.length;
             }
         }
-        
+
         for(NSArray *batch in idBatches){
             @autoreleasepool{
                 [self processAllDocsBatch:batch withUrlCommand:urlCommand onDatabase:dbName];
             }
         }
-        
+
         CDVPluginResult* finalPluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"complete"];
         [finalPluginResult setKeepCallbackAsBool:NO];
         [self.commandDelegate sendPluginResult:finalPluginResult callbackId:urlCommand.callbackId];
@@ -415,7 +419,7 @@ static NSThread *cblThread;
             CBLQuery* batchQuery = [CBLQueryBuilder select:@[[CBLQuerySelectResult all]]
                                                       from:[CBLQueryDataSource database:dbs[dbName]]
                                     ];
-            
+
             NSError *queryError;
             CBLQueryResultSet *result = [batchQuery execute:&queryError];
             NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
@@ -438,7 +442,7 @@ static NSThread *cblThread;
                     NSLog( @"ERROR %@", dict );
                 }
             }
-            
+
             CDVPluginResult* pluginResult =
             [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[[NSString stringWithFormat:@"[%@]", [responseBuffer componentsJoinedByString:@","]] dataUsingEncoding:NSUTF8StringEncoding]];
             [pluginResult setKeepCallbackAsBool:YES];
@@ -473,23 +477,12 @@ static NSThread *cblThread;
         return [CBLQueryArrayFunction contains:[CBLQueryExpression property:field]
                                          value:[CBLQueryExpression string:where]];
     }
-    else if ([method isEqualToString:@"in"]) {
-        
-        NSMutableArray *arrIn= [[NSMutableArray alloc] init];
-        
-        for (int i=0; i<[(NSArray*)where count]; i++) {
-            [arrIn addObject:[CBLQueryExpression string:[(NSArray*)where objectAtIndex:i]]];
-        }
-        
-        
-        return [[CBLQueryExpression property:field] in:arrIn];
-    }
     else if ([method isEqualToString:@"exist"]) {
         return [[CBLQueryExpression property:field] notNullOrMissing];
     }else{
         return nil;
     }
-    
+
 }
 
 
@@ -507,7 +500,7 @@ static NSThread *cblThread;
             if([s isEqualToString:@"COUNT"]){
                 [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction count:[CBLQueryExpression all]] as:s]];
             }else{
-                
+            
                 [marr addObject:[CBLQuerySelectResult property:s]];
             }
         }
@@ -520,10 +513,10 @@ static NSThread *cblThread;
 
 // creating query
 - (void)query:(CDVInvokedUrlCommand *) urlCommand {
-    
+
     dispatch_cbl_async(cblThread, ^{
         NSString* dbName = [urlCommand.arguments objectAtIndex:0];
-        
+
         NSArray *field = [urlCommand.arguments objectAtIndex:1];
         if(![field isKindOfClass:[NSArray class]]){
             field=[[NSArray alloc] init];
@@ -555,14 +548,14 @@ static NSThread *cblThread;
         }
         CBLQueryLimit *queryLimit;
         if([urlCommand.arguments count]>7 && ![[urlCommand.arguments objectAtIndex:7] isEqual:[NSNull null]]){
-            queryLimit= [CBLQueryLimit limit:[CBLQueryExpression integer:[[urlCommand.arguments objectAtIndex:7] intValue]]];
+           queryLimit= [CBLQueryLimit limit:[CBLQueryExpression integer:[[urlCommand.arguments objectAtIndex:7] intValue]]];
         }
         if([urlCommand.arguments count]>8 && ![[urlCommand.arguments objectAtIndex:8] isEqual:[NSNull null]]){
             queryLimit= [CBLQueryLimit limit:[CBLQueryExpression integer:[[urlCommand.arguments objectAtIndex:7] intValue]] offset:[CBLQueryExpression integer:[[urlCommand.arguments objectAtIndex:8] intValue]]];
         }
         NSError *error;
         if ([isLocal isEqualToString:@"true"]) {
-            
+
         } else {
             CBLQueryExpression *whereExpression;
             NSArray* selectExpression=[CBLite arrayCBLFieldFromArray:field andGroupByField:groupbyField];
@@ -574,52 +567,52 @@ static NSThread *cblThread;
             NSError *jsonError;
             NSArray *jsonDataArray = [[NSArray alloc]init];
             jsonDataArray = [NSJSONSerialization JSONObjectWithData:[searchQuery dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:&jsonError];
-            
-            
-            NSDictionary *jsonObject = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:&jsonError];
-            
-            if(jsonObject !=nil){
-                if([[jsonObject objectForKey:@"group"] isEqual:@"AND"]){
-                    
-                    NSMutableArray *array=[jsonObject objectForKey:@"search"];
-                    
-                    if(array.count>0){
-                        whereExpression =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
-                    }
-                    if(array.count>1){
-                        for(int z = 1; z<array.count;z++){
-                            
-                            whereExpression=[whereExpression andExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
+
+          
+                NSDictionary *jsonObject = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:&jsonError];
+
+                if(jsonObject !=nil){
+                    if([[jsonObject objectForKey:@"group"] isEqual:@"AND"]){
+
+                        NSMutableArray *array=[jsonObject objectForKey:@"search"];
+
+                        if(array.count>0){
+                            whereExpression =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
                         }
-                        
-                    }
-                    
-                }
-                if([[jsonObject objectForKey:@"group"] isEqual:@"OR"]){
-                    
-                    NSMutableArray *array=[jsonObject objectForKey:@"search"];
-                    
-                    if(array.count>0){
-                        whereExpression =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
-                    }
-                    if(array.count>1){
-                        for(int z = 1; z<array.count;z++){
-                            
-                            whereExpression=[whereExpression orExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
+                        if(array.count>1){
+                            for(int z = 1; z<array.count;z++){
+
+                                whereExpression=[whereExpression andExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
+                            }
+
                         }
-                        
+
                     }
-                    
+                    if([[jsonObject objectForKey:@"group"] isEqual:@"OR"]){
+
+                        NSMutableArray *array=[jsonObject objectForKey:@"search"];
+
+                        if(array.count>0){
+                            whereExpression =[self getQueryFromString:jsonObject[@"search"][0][@"method"] and:jsonObject[@"search"][0][@"field"] and:jsonObject[@"search"][0][@"where"]];
+                        }
+                        if(array.count>1){
+                            for(int z = 1; z<array.count;z++){
+
+                                whereExpression=[whereExpression orExpression:[self getQueryFromString:jsonObject[@"search"][z][@"method"] and:jsonObject[@"search"][z][@"field"] and:jsonObject[@"search"][z][@"where"]]];
+                            }
+
+                        }
+
+                    }
+
                 }
-                
-            }
             //End Generate
-            
-            
-            NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
+
+
+              NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
             CBLDatabase *db=dbs[dbName];
             if(!db){
-                
+             
                 
                 NSString* response=@"Db not started";
                 CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
@@ -627,48 +620,48 @@ static NSThread *cblThread;
                 [pluginResult setKeepCallbackAsBool:YES];
                 [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
             }else{
-                CBLQuery *query;
-                query= [CBLQueryBuilder select:selectExpression
-                                          from:[CBLQueryDataSource database:db]
-                                         where:whereExpression groupBy:groupbyField having:nil orderBy:orderByField limit:queryLimit];
+            CBLQuery *query;
+            query= [CBLQueryBuilder select:selectExpression
+                                                 from:[CBLQueryDataSource database:db]
+                                                where:whereExpression groupBy:groupbyField having:nil orderBy:orderByField limit:queryLimit];
+         
+            CFTimeInterval startQuery = CFAbsoluteTimeGetCurrent();
+            
+            NSArray *result = [[query execute:&error] allResults];
+            if(error){
+                NSLog(@"%@ query in Error : %@",dbName,[query description]);
+                NSData *data = [NSJSONSerialization dataWithJSONObject:[error userInfo]
+                                                               options:0
+                                                                 error:&error];
+                NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
                 
-                CFTimeInterval startQuery = CFAbsoluteTimeGetCurrent();
-                
-                NSArray *result = [[query execute:&error] allResults];
-                if(error){
-                    NSLog(@"%@ query in Error : %@",dbName,[query description]);
-                    NSData *data = [NSJSONSerialization dataWithJSONObject:[error userInfo]
-                                                                   options:0
-                                                                     error:&error];
-                    NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-                    CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
-                    
-                    [pluginResult setKeepCallbackAsBool:YES];
-                    [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-                }else{
-                    for (CBLQueryResult* row in result) {
-                        if([field count]==0){
-                            [responseBuffer addObject:[[row toDictionary] objectForKey:dbName]];
-                        }else{
-                            [responseBuffer addObject:[row toDictionary]];
-                        }
+                [pluginResult setKeepCallbackAsBool:YES];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+            }else{
+                for (CBLQueryResult* row in result) {
+                    if([field count]==0){
+                        [responseBuffer addObject:[[row toDictionary] objectForKey:dbName]];
+                    }else{
+                        [responseBuffer addObject:[row toDictionary]];
                     }
-                    CFTimeInterval endQuery = CFAbsoluteTimeGetCurrent();
-                    NSLog(@"%@ Query %@ Time: %g",dbName,[query description], endQuery - startQuery);
-                    if(endQuery - startQuery>1){
-                        NSLog(@"%@ Query Explain time: %g query: %@",dbName, endQuery - startQuery,[query explain:nil]);
-                    }
-                    NSData *data = [NSJSONSerialization dataWithJSONObject:responseBuffer
-                                                                   options:0
-                                                                     error:&error];
-                    NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-                    CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
-                    
-                    [pluginResult setKeepCallbackAsBool:YES];
-                    [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
-                    
                 }
+                CFTimeInterval endQuery = CFAbsoluteTimeGetCurrent();
+                NSLog(@"%@ Query %@ Time: %g",dbName,[query description], endQuery - startQuery);
+                if(endQuery - startQuery>1){
+                    NSLog(@"%@ Query Explain time: %g query: %@",dbName, endQuery - startQuery,[query explain:nil]);
+                }
+                NSData *data = [NSJSONSerialization dataWithJSONObject:responseBuffer
+                                                               options:0
+                                                                 error:&error];
+                NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+               CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
+                
+                [pluginResult setKeepCallbackAsBool:YES];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+
             }
+         }
             
         }
     });
@@ -805,12 +798,12 @@ static NSThread *cblThread;
         NSString* docId = [urlCommand.arguments objectAtIndex:1];
         NSString* jsonString = [urlCommand.arguments objectAtIndex:2];
         NSString* isLocal = [urlCommand.arguments objectAtIndex:3];
-        
+
         NSStringEncoding  encoding = NSUTF8StringEncoding;
         NSData * jsonData = [jsonString dataUsingEncoding:encoding];
         NSError * error=nil;
         NSMutableDictionary * jsonDictionary = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:&error];
-        
+
         if([isLocal isEqualToString:@"local"]){
             //            NSError * _Nullable __autoreleasing * error2 = NULL;
             //            [dbs[dbName] putLocalDocument:jsonDictionary withID:docId error: error2];
@@ -821,11 +814,11 @@ static NSThread *cblThread;
             //if exists, force update
             if(doc != nil){
                 for (NSString* key in jsonDictionary) {
-                    
+
                     [doc setValue:[jsonDictionary objectForKey:key] forKey:key];
                 }
-                
-                
+
+
                 if (![dbs[dbName] saveDocument:doc error:&error]) {
                     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"updated failed"];
                     [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
@@ -838,10 +831,10 @@ static NSThread *cblThread;
             //if doesnt exist, create
             else {
                 CBLMutableDocument* newDoc = [[CBLMutableDocument alloc] initWithID:docId data: jsonDictionary] ;
-                
+
                 NSError* error;
                 if (![dbs[dbName] saveDocument:newDoc error:&error]) {
-                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"failed to create document: %@",[error description]]];
+                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"failed to create document"];
                     [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
                 }
                 else {
@@ -938,7 +931,7 @@ static NSThread *cblThread;
             [pluginResult setKeepCallbackAsBool:NO];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:cbId];
         }
-        
+
         [callbacks removeAllObjects];
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"callbacks reset"];
         [pluginResult setKeepCallbackAsBool:NO];
@@ -949,13 +942,13 @@ static NSThread *cblThread;
 - (void)launchCouchbaseLite {
     cblThread = [[NSThread alloc] initWithTarget: self selector:@selector(cblThreadMain) object:nil];
     [cblThread start];
-    
+
     dispatch_cbl_async(cblThread, ^{
-        
+
         if(dbs == nil){dbs = [NSMutableDictionary dictionary];}
         if(replications == nil){replications = [NSMutableDictionary dictionary];}
         if(callbacks == nil){callbacks = [NSMutableArray array];}
-        
+
     });
 }
 
