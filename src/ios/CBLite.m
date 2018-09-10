@@ -496,10 +496,7 @@ static NSThread *cblThread;
     }
     else if ([method isEqualToString:@"exist"]) {
         return [[CBLQueryExpression property:field] notNullOrMissing];
-    }else if ([method isEqualToString:@"notExist"]) {
-        return [[CBLQueryExpression property:field] isNullOrMissing];
-    }
-    else{
+    }else{
         return nil;
     }
     
