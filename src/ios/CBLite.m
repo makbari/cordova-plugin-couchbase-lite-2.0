@@ -346,7 +346,10 @@ static NSThread *cblThread;
         //        [push start]; [pull start];
         NSURL *url = [NSURL URLWithString:syncURL];
         CBLURLEndpoint *target = [[CBLURLEndpoint alloc] initWithURL: url];
-        CBLReplicatorConfiguration *config = [[CBLReplicatorConfiguration alloc] initWithDatabase:dbs[dbName]
+        CBLDatabase* db=dbs[dbName];
+        
+        if(db){
+        CBLReplicatorConfiguration *config = [[CBLReplicatorConfiguration alloc] initWithDatabase:db
                                                                                            target:target];
         
         if([replicationType isEqualToString:@"PushPull"]){
@@ -368,7 +371,13 @@ static NSThread *cblThread;
         replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] = replicator;
         //        replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pull"]] = pull;
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"native sync started"];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+        }else{
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"dbNotFound"];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+            
+        }
+        
     });
 }
 
