@@ -277,32 +277,28 @@ static NSThread *cblThread;
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"DB not started"];
         }else{
             @try {
-            CBLDatabase* db=dbs[dbName];
-            //stop all replication
-            
-            for (NSString *r in [replications copy]) {
-                if([r containsString:dbName]){
-                    CBLReplicator * repl = replications[r];
-                    [repl stop];
-                    [replications removeObjectForKey:r];
+                CBLDatabase* db=dbs[dbName];
+                //stop all replication
+                
+                for (NSString *r in [replications copy]) {
+                    if([r containsString:dbName]){
+                        CBLReplicator * repl = replications[r];
+                        [repl stop];
+                        [replications removeObjectForKey:r];
+                    }
                 }
-            }
-            
-            [NSThread sleepForTimeInterval:1.0f];
-            
-            [db delete:&error];
-            if(!error){
-                [dbs removeObjectForKey:dbName];
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
-            }else{
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:
-                                [NSString stringWithFormat:@"DB error %@",[error description] ]];
-            }
-            [db delete:&error];
-            [dbs removeObjectForKey:dbName];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
-            }
-            @catch (NSException *exception) {
+                
+                [NSThread sleepForTimeInterval:1.0f];
+                
+                [db delete:&error];
+                if(!error){
+                    [dbs removeObjectForKey:dbName];
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"CBL db delete success"];
+                }else{
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:
+                                    [NSString stringWithFormat:@"DB error %@",[error description] ]];
+                }
+            }@catch (NSException *exception) {
                 NSLog(@"%@", exception.reason);
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"CBL db delete failed: %@",exception.reason]];
             }
@@ -357,28 +353,28 @@ static NSThread *cblThread;
         CBLDatabase* db=dbs[dbName];
         
         if(db){
-        CBLReplicatorConfiguration *config = [[CBLReplicatorConfiguration alloc] initWithDatabase:db
-                                                                                           target:target];
-        
-        if([replicationType isEqualToString:@"PushPull"]){
-            config.replicatorType = kCBLReplicatorTypePushAndPull;
-        }else if([replicationType isEqualToString:@"Push"]){
-            config.replicatorType = kCBLReplicatorTypePush;
-        }else if([replicationType isEqualToString:@"Pull"]){
-            config.replicatorType = kCBLReplicatorTypePull;
-        }
-        if(channlesArray!=NULL){
-            config.channels=channlesArray;
-        }
-        config.allowReplicatingInBackground=background;
-        config.continuous = true;
-        
-        config.authenticator = [[CBLBasicAuthenticator alloc] initWithUsername:user password:pass];
-        CBLReplicator *replicator = [[CBLReplicator alloc] initWithConfig:config];
-        [replicator start];
-        replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] = replicator;
-        //        replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pull"]] = pull;
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"native sync started"];
+            CBLReplicatorConfiguration *config = [[CBLReplicatorConfiguration alloc] initWithDatabase:db
+                                                                                               target:target];
+            
+            if([replicationType isEqualToString:@"PushPull"]){
+                config.replicatorType = kCBLReplicatorTypePushAndPull;
+            }else if([replicationType isEqualToString:@"Push"]){
+                config.replicatorType = kCBLReplicatorTypePush;
+            }else if([replicationType isEqualToString:@"Pull"]){
+                config.replicatorType = kCBLReplicatorTypePull;
+            }
+            if(channlesArray!=NULL){
+                config.channels=channlesArray;
+            }
+            config.allowReplicatingInBackground=background;
+            config.continuous = true;
+            
+            config.authenticator = [[CBLBasicAuthenticator alloc] initWithUsername:user password:pass];
+            CBLReplicator *replicator = [[CBLReplicator alloc] initWithConfig:config];
+            [replicator start];
+            replications[[NSString stringWithFormat:@"%@%@", dbName, replicationType]] = replicator;
+            //        replications[[NSString stringWithFormat:@"%@%@", dbName, @"_pull"]] = pull;
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"native sync started"];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
         }else{
             CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"dbNotFound"];
@@ -700,11 +696,11 @@ static NSThread *cblThread;
                         [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
                         
                     }
-                
+                    
                 }@catch (NSException *exception) {
-                        NSLog(@"%@", exception.reason);
-                       CDVPluginResult*  pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"CBL db query failed: %@",exception.reason]];
-                     [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
+                    NSLog(@"%@", exception.reason);
+                    CDVPluginResult*  pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"CBL db query failed: %@",exception.reason]];
+                    [self.commandDelegate sendPluginResult:pluginResult callbackId:urlCommand.callbackId];
                 }
             }
             
