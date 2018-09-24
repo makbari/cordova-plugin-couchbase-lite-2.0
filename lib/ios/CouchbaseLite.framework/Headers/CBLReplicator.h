@@ -77,7 +77,7 @@ typedef struct {
 @property (readonly, nonatomic) CBLReplicatorConfiguration* config;
 
 /** The replicator's current status: its activity level and progress. Observable. */
-@property (readonly, nonatomic) CBLReplicatorStatus* status;
+@property (readonly, atomic) CBLReplicatorStatus* status;
 
 /** Initializes a replicator with the given configuration. */
 - (instancetype) initWithConfig: (CBLReplicatorConfiguration*)config;
@@ -97,6 +97,14 @@ typedef struct {
  and the replicator change notification will be notified accordingly.
  */
 - (void) stop;
+
+
+/**
+ Resets the local checkpoint of the replicator, meaning that it will read all
+ changes since the beginning of time from the remote database. This can only be
+ called when the replicator is in a stopped state.
+ */
+- (void) resetCheckpoint;
 
 /** 
  Adds a replicator change listener. Changes will be posted on the main queue.

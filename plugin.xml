@@ -32,7 +32,6 @@
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDatabase.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDatabaseChange.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDatabaseConfiguration.h"/>
-    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDatabaseEndpoint.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDictionary.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDictionaryFragment.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLDocument.h"/>
