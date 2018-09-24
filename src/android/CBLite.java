@@ -766,7 +766,10 @@ public class CBLite extends CordovaPlugin {
                 }
             } else if (method.equalsIgnoreCase("contains")) {
                 whereExpression = ArrayFunction.contains(Expression.property(field), Expression.string(where));
-            }else if (method.equalsIgnoreCase("in")) {
+            }else if (method.equalsIgnoreCase("like")) {
+                whereExpression = Expression.property(field).like(Expression.string(where));
+            }
+            else if (method.equalsIgnoreCase("in")) {
 
                 try {
                     JSONArray obj= new JSONArray(where);
