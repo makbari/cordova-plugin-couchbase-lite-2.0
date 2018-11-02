@@ -544,8 +544,12 @@ static NSThread *cblThread;
             if([s isEqualToString:@"COUNT"]){
                 [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction count:[CBLQueryExpression all]] as:s]];
             }else{
-                
-                [marr addObject:[CBLQuerySelectResult property:s]];
+                if([s containsString:@" as "]){
+                     NSArray *array = [s componentsSeparatedByString:@" as "];
+                    [marr addObject:[CBLQuerySelectResult property:array[0] as: array[1]]];
+                }else{
+                    [marr addObject:[CBLQuerySelectResult property:s]];
+                }
             }
         }
         selectExpression=[marr copy];
