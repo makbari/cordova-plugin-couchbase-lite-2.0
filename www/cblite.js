@@ -1,3 +1,4 @@
+cordova.define("cordova-plugin-couchbase-lite-2.0.CouchbaseLite", function(require, exports, module) {
 var exec = require('cordova/exec');
 /**
  * Original API
@@ -7,6 +8,14 @@ var exec = require('cordova/exec');
  * @param options:[dbName]
  * @returns docId:Rx<{id:string, is_delete:boolean}>
  */
+if( typeof device ==="undefined"){
+
+    device={
+        platform: cordova.platformId=="ios"? "iOS":"Android"
+    };
+
+}
+
 module.exports.changesDatabase$ = function changesDatabase$(options) {
     return Rx.Observable.create(function cblChangesSubscribe(observer) {
         exec(function (res) {
@@ -321,3 +330,4 @@ module.exports.deleteDocument = function upsert(options) {
         exec(function (res) {resolve(res);}, function (err) {reject(err);}, "CBLite", "deleteDocument", options);
     });
 };
+});

@@ -57,16 +57,16 @@ static NSThread *cblThread;
 +(NSString *) getStringFromStatus:(CBLReplicatorStatus *)status withReplicatorName:(NSString *)r andDatabase:(NSString *) dbName{
     NSString * response=@"";
     if (status.activity == kCBLReplicatorStopped) {
-        NSLog(@"Replication stopped");
+        NSLog(@"Replication stopped %@",dbName);
         response = [CBLite jsonSyncStatus:@"REPLICATION_STOPPED" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
     } else if (status.activity == kCBLReplicatorOffline) {
-        NSLog(@"Replication Offline");
+        NSLog(@"Replication Offline %@",dbName);
         response = [CBLite jsonSyncStatus:@"REPLICATION_OFFLINE" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
     } else if (status.activity == kCBLReplicatorConnecting) {
-        NSLog(@"Replication Connecting");
+        NSLog(@"Replication Connecting %@",dbName);
         response = [CBLite jsonSyncStatus:@"REPLICATION_CONNECTING" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
     } else if (status.activity == kCBLReplicatorIdle) {
-        NSLog(@"Replication kCBLReplicatorIdle");
+        NSLog(@"Replication kCBLReplicatorIdle %@",dbName);
         response = [CBLite jsonSyncStatus:@"REPLICATION_IDLE" withDb:dbName withType:r progressTotal:status.progress.total progressCompleted:status.progress.completed];
     } else if (status.activity == kCBLReplicatorBusy) {
         NSLog( @"%@", [NSString stringWithFormat:@"Replication Busy Replication %@ %llu di %llu",dbName, status.progress.completed,status.progress.total]);
@@ -219,8 +219,10 @@ static NSThread *cblThread;
             //[CBLDatabase setLogLevel: kCBLLogLevelVerbose domain: kCBLLogDomainReplicator];
             dbs[dbName] =db;
             if([index count]>0){
-                NSArray *alreadyActivatedIndex=[db indexes] ;
+                NSMutableArray *indexvalid=[[NSMutableArray alloc]init];
+                NSArray *alreadyActivatedIndex=[db indexes];
                 for (NSDictionary* ind in index) {
+                    [indexvalid addObject:[ind valueForKey:@"name"]];
                     if(![alreadyActivatedIndex containsObject:[ind valueForKey:@"name"]]){
                         NSMutableArray* arrField=[[NSMutableArray alloc]init];
                         for(NSString* field in [ind valueForKey:@"fileds"]){
@@ -228,8 +230,17 @@ static NSThread *cblThread;
                         }
                         CBLIndex* index = [CBLIndexBuilder valueIndexWithItems:arrField];
                         [db createIndex:index withName:[ind valueForKey:@"name"] error:&error];
+                    }else{
+                        
                     }
                 }
+                
+                for(NSString *presInd in alreadyActivatedIndex){
+                    if(![indexvalid containsObject:presInd] && ![presInd isEqualToString:@"kv_default_seqs"]){
+                        [db deleteIndexForName:presInd error:&error];
+                    }
+                }
+                
                 
                 
             }
@@ -533,8 +544,12 @@ static NSThread *cblThread;
             if([s isEqualToString:@"COUNT"]){
                 [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction count:[CBLQueryExpression all]] as:s]];
             }else{
-                
-                [marr addObject:[CBLQuerySelectResult property:s]];
+                if([s containsString:@" as "]){
+                     NSArray *array = [s componentsSeparatedByString:@" as "];
+                    [marr addObject:[CBLQuerySelectResult property:array[0] as: array[1]]];
+                }else{
+                    [marr addObject:[CBLQuerySelectResult property:s]];
+                }
             }
         }
         selectExpression=[marr copy];
