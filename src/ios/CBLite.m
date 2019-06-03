@@ -1,9 +1,9 @@
 #import "CBLite.h"
 
-#import "CouchbaseLite.h"
-#import "CBLDatabase.h"
+#import <CouchbaseLite/CouchbaseLite.h>
+#import <CouchbaseLite/CBLDatabase.h>
+#import <CouchbaseLite/CBLReplicator.h>
 
-#import "CBLReplicator.h"
 #import <Cordova/CDV.h>
 
 @implementation CBLite
@@ -411,7 +411,7 @@ static NSThread *cblThread;
         NSError *idQueryError;
         NSMutableArray *allIds = [NSMutableArray array];
         CBLQueryResultSet *result = [idQuery execute:&idQueryError];
-        for (CBLQueryRow* row in result) {
+        for (CBLQueryResult* row in result) {
             @autoreleasepool {
                 [allIds addObject:[row valueForKey:dbName]];
             }
@@ -453,7 +453,7 @@ static NSThread *cblThread;
             NSError *queryError;
             CBLQueryResultSet *result = [batchQuery execute:&queryError];
             NSMutableArray *responseBuffer = [[NSMutableArray alloc] init];
-            for (CBLQueryRow* row in result) {
+            for (CBLQueryResult* row in result) {
                 NSError *error;
                 @try{
                     CBLDictionary *dict = [row valueForKey:dbName];
@@ -545,6 +545,7 @@ static NSThread *cblThread;
                 [marr addObject:[CBLQuerySelectResult expression:[CBLQueryFunction count:[CBLQueryExpression all]] as:s]];
             }else{
                 if([s containsString:@" as "]){
+                    
                      NSArray *array = [s componentsSeparatedByString:@" as "];
                     [marr addObject:[CBLQuerySelectResult property:array[0] as: array[1]]];
                 }else{
@@ -701,9 +702,12 @@ static NSThread *cblThread;
                         if(endQuery - startQuery>1){
                             NSLog(@"%@ Query Explain time: %g query: %@",dbName, endQuery - startQuery,[query explain:nil]);
                         }
+                        CFTimeInterval startConversion = CFAbsoluteTimeGetCurrent();
                         NSData *data = [NSJSONSerialization dataWithJSONObject:responseBuffer
                                                                        options:0
                                                                          error:&error];
+                        CFTimeInterval endConversion = CFAbsoluteTimeGetCurrent();
+                        NSLog(@"%@ Query Conversion time: %g",dbName, endConversion - startConversion);
                         NSString* response=[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
                         CDVPluginResult* pluginResult =  [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArrayBuffer:[response dataUsingEncoding:NSUTF8StringEncoding]];
                         
