@@ -68,7 +68,6 @@
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryParameters.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryResult.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryResultSet.h"/>
-    <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryRow.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQuerySelectResult.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLQueryVariableExpression.h"/>
     <header-file src="lib/ios/CouchbaseLite.framework/Headers/CBLReplicator.h"/>
