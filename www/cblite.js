@@ -1,4 +1,4 @@
-cordova.define("cordova-plugin-couchbase-lite-2.0.CouchbaseLite", function(require, exports, module) {
+//cordova.define("cordova-plugin-couchbase-lite-2.0.CouchbaseLite", function(require, exports, module) {
 var exec = require('cordova/exec');
 /**
  * Original API
@@ -330,4 +330,4 @@ module.exports.deleteDocument = function upsert(options) {
         exec(function (res) {resolve(res);}, function (err) {reject(err);}, "CBLite", "deleteDocument", options);
     });
 };
-});
+//});
