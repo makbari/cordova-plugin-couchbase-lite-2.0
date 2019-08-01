@@ -4,6 +4,8 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.JsonReader;
 import android.util.Log;
+import java.util.*;
+
 
 import com.couchbase.lite.ArrayFunction;
 import com.couchbase.lite.Authenticator;
@@ -16,6 +18,7 @@ import com.couchbase.lite.DatabaseConfiguration;
 import com.couchbase.lite.Dictionary;
 import com.couchbase.lite.Endpoint;
 import com.couchbase.lite.Expression;
+import com.couchbase.lite.MutableDictionary;
 import com.couchbase.lite.Query;
 import com.couchbase.lite.QueryBuilder;
 import com.couchbase.lite.Replicator;
@@ -26,6 +29,8 @@ import com.couchbase.lite.Result;
 import com.couchbase.lite.ResultSet;
 import com.couchbase.lite.SelectResult;
 import com.couchbase.lite.URLEndpoint;
+import com.couchbase.lite.Document;
+import com.couchbase.lite.MutableDocument;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -39,6 +44,9 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class CBLite extends CordovaPlugin {
 
@@ -872,47 +880,114 @@ public class CBLite extends CordovaPlugin {
     }
 
     private void upsert(final JSONArray args, final CallbackContext callback) {
-        //        cordova.getThreadPool().execute(new Runnable() {
-        //            public void run() {
-        //                try {
-        //                    String dbName = args.getString(0);
-        //                    String id = args.getString(1);
-        //                    String jsonString = args.getString(2);
-        //                    String isLocal = args.getString(3);
-        //
-        //                    if (isLocal.equals("local")) {
-        //                        Map<String, Object> mapDoc = mapper.readValue(jsonString, new TypeReference<Map<String, Object>>() {
-        //                        });
-        //                        dbs.get(dbName).putLocalDocument(id, mapDoc);
-        //                        callback.success("local upsert successful");
-        //                    } else {
-        //                        Document doc = dbs.get(dbName).getExistingDocument(id);
-        //                        //if doc does not exist
-        //                        if (doc == null) {
-        //                            final Map<String, Object> mapDoc = mapper.readValue(jsonString, new TypeReference<Map<String, Object>>() {
-        //                            });
-        //                            Document document = dbs.get(dbName).getDocument(id);
-        //                            document.putProperties(mapDoc);
-        //                            callback.success("upsert successful");
-        //                        }
-        //                        //doc exists, force update
-        //                        else {
-        //                            final Map<String, Object> mapDoc = mapper.readValue(jsonString, new TypeReference<Map<String, Object>>() {
-        //                            });
-        //                            doc.update(new Document.DocumentUpdater() {
-        //                                @Override
-        //                                public boolean update(UnsavedRevision newRevision) {
-        //                                    newRevision.setUserProperties(mapDoc);
-        //                                    callback.success("upsert successful");
-        //                                    return true;
-        //                                }
-        //                            });
-        //                        }
-        //                    }
-        //                } catch (final Exception e) {
-        //                    callback.error(e.getMessage());
-        //                }
-        //            }
-        //        });
+               cordova.getThreadPool().execute(new Runnable() {
+                   public void run() {
+                       try {
+                           String dbName = args.getString(0);
+                           String id = args.getString(1);
+                           String jsonString = args.getString(2);
+                           String isLocal = args.getString(3);
+        
+                           if (isLocal.equals("local")) {
+                              //NOT IMPLEMENTED
+                           } else {
+
+                               //jsonstring da trasofrmre in oggetto
+                               JSONObject objJson= new JSONObject(jsonString);
+                               MutableDictionary obj= new MutableDictionary();
+                                obj= convertFromJsonObj(obj,objJson);
+                               Document doc = dbs.get(dbName).getDocument(id);
+                               //if doc does not exist
+                               if (doc == null) {
+
+                                   
+
+
+                                   //inserire l'oggetto come nuovo
+                                   MutableDocument mutableDoc = new MutableDocument();
+
+                                   for (String key:obj.getKeys()) {
+
+                                       if (obj.getValue(key) !=null) {
+                                           // do something with jsonObject here
+                                               Map<String, Object> temp = new HashMap<String, Object>();
+                                               temp.put(key,obj.getValue(key));
+                                               mutableDoc.setData(temp);
+                                       }
+                                   }
+
+                                   dbs.get(dbName).save(mutableDoc);
+                                   callback.success("upsert successful");
+                               }
+                               //doc exists, force update
+                               else {
+
+                                   //aggiornare l'oggetto
+                                   MutableDocument mutableDoc= doc.toMutable();
+                                   mutableDoc.setData(obj.toMap());
+
+                                   dbs.get(dbName).save(mutableDoc);
+
+
+                               }
+                           }
+                       } catch (final Exception e) {
+                           callback.error(e.getMessage());
+                       }
+                   }
+               });
     }
+
+    private static MutableDictionary convertFromJsonObj(MutableDictionary m, JSONObject obj){
+        try {
+            Iterator<String> keys = obj.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+
+                // do something with jsonObject here
+                if ((obj.get(key) instanceof JSONObject)) {
+                    MutableDictionary temp=new MutableDictionary();
+                    temp=convertFromJsonObj(temp,((JSONObject)obj.get(key)));
+
+                    m.setValue(key,temp);
+                }else if ((obj.get(key) instanceof JSONArray)) {
+
+
+                    m.setValue(key,convertFromJsonArray((JSONArray) obj.get(key)));
+                } else {
+                    m.setValue(key, obj.get(key));
+                }
+
+            }
+        }catch(Exception e){
+
+        }
+        return m;
+    }
+
+    private static ArrayList<Object> convertFromJsonArray( JSONArray obj){
+        ArrayList<Object> list = new ArrayList<Object>();
+        try {
+            JSONArray jsonArray = (JSONArray)obj;
+            if (jsonArray != null) {
+                int len = jsonArray.length();
+                for (int i=0;i<len;i++){
+                    if (jsonArray.get(i) instanceof JSONObject){
+                        MutableDictionary temp=new MutableDictionary();
+                        temp=convertFromJsonObj(temp,((JSONObject)jsonArray.get(i)));
+                        list.add(temp);
+                    }else if ((jsonArray.get(i) instanceof JSONArray)) {
+                        list.add(convertFromJsonArray((JSONArray) jsonArray.get(i)));
+                    }else{
+                        list.add(jsonArray.get(i));
+                    }
+                }
+            }
+        }catch(Exception e){
+
+        }
+        return list;
+    }
+
+
 }
